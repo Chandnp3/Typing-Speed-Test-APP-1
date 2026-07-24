@@ -1,0 +1,145 @@
+/* ============================================
+   Theme System - CSS Custom Properties
+   Four premium themes: Cyberpunk, Nord, OLED, Forest
+   ============================================ */
+
+:root {
+  /* Typography */
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* Sizing */
+  --text-typing: 28px;
+  --text-heading: 32px;
+  --text-subheading: 15px;
+  --text-metrics: 56px;
+  --line-height-typing: 1.6;
+  --letter-spacing-typing: 0.05em;
+  
+  /* Spacing */
+  --gap-xs: 4px;
+  --gap-sm: 8px;
+  --gap-md: 16px;
+  --gap-lg: 24px;
+  --gap-xl: 40px;
+  --gap-xxl: 64px;
+  
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-medium: 0.3s ease;
+  --transition-slow: 0.5s ease;
+  
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  
+  /* Caret */
+  --caret-width: 2.5px;
+}
+
+/* ============================================
+   Theme: Cyberpunk (Neon Tech)
+   ============================================ */
+[data-theme="cyberpunk"] {
+  --background: #0b0e14;
+  --background-secondary: #111620;
+  --background-tertiary: #161c28;
+  --surface: #1a2030;
+  --text-dim: #4b5263;
+  --text-medium: #7c8298;
+  --text-bright: #00f0ff;
+  --primary: #f0e600;
+  --primary-hover: #f5ed33;
+  --primary-dim: rgba(240, 230, 0, 0.15);
+  --error: #ff0055;
+  --error-dim: rgba(255, 0, 85, 0.15);
+  --correct: #00f0ff;
+  --correct-dim: rgba(0, 240, 255, 0.12);
+  --incorrect: #ff0055;
+  --caret-color: #f0e600;
+  --border: rgba(0, 240, 255, 0.12);
+  --chart-line: #00f0ff;
+  --chart-fill: rgba(0, 240, 255, 0.1);
+}
+
+/* ============================================
+   Theme: Nord (Scandinavian Frost)
+   ============================================ */
+[data-theme="nord"] {
+  --background: #2e3440;
+  --background-secondary: #3b4252;
+  --background-tertiary: #434c5e;
+  --surface: #4c566a;
+  --text-dim: #4c566a;
+  --text-medium: #81a1c1;
+  --text-bright: #eceff4;
+  --primary: #88c0d0;
+  --primary-hover: #a3d1e0;
+  --primary-dim: rgba(136, 192, 208, 0.15);
+  --error: #bf616a;
+  --error-dim: rgba(191, 97, 106, 0.15);
+  --correct: #a3be8c;
+  --correct-dim: rgba(163, 190, 140, 0.12);
+  --incorrect: #bf616a;
+  --caret-color: #88c0d0;
+  --border: rgba(136, 192, 208, 0.15);
+  --chart-line: #88c0d0;
+  --chart-fill: rgba(136, 192, 208, 0.1);
+}
+
+/* ============================================
+   Theme: Dark OLED (Minimalist)
+   ============================================ */
+[data-theme="oled"] {
+  --background: #000000;
+  --background-secondary: #0a0a0a;
+  --background-tertiary: #141414;
+  --surface: #1a1a1a;
+  --text-dim: #444444;
+  --text-medium: #888888;
+  --text-bright: #ffffff;
+  --primary: #e0e0e0;
+  --primary-hover: #ffffff;
+  --primary-dim: rgba(224, 224, 224, 0.1);
+  --error: #ff3333;
+  --error-dim: rgba(255, 51, 51, 0.12);
+  --correct: #66bb6a;
+  --correct-dim: rgba(102, 187, 106, 0.1);
+  --incorrect: #ff3333;
+  --caret-color: #e0e0e0;
+  --border: rgba(224, 224, 224, 0.1);
+  --chart-line: #e0e0e0;
+  --chart-fill: rgba(224, 224, 224, 0.08);
+}
+
+/* ============================================
+   Theme: Forest (Nature Sage)
+   ============================================ */
+[data-theme="forest"] {
+  --background: #1a2421;
+  --background-secondary: #223029;
+  --background-tertiary: #2a3b32;
+  --surface: #334a3d;
+  --text-dim: #3f5c53;
+  --text-medium: #7a9e8f;
+  --text-bright: #e8f1ee;
+  --primary: #a3c9a8;
+  --primary-hover: #b8d9bc;
+  --primary-dim: rgba(163, 201, 168, 0.15);
+  --error: #e27396;
+  --error-dim: rgba(226, 115, 150, 0.15);
+  --correct: #a3c9a8;
+  --correct-dim: rgba(163, 201, 168, 0.12);
+  --incorrect: #e27396;
+  --caret-color: #a3c9a8;
+  --border: rgba(163, 201, 168, 0.15);
+  --chart-line: #a3c9a8;
+  --chart-fill: rgba(163, 201, 168, 0.1);
+}
