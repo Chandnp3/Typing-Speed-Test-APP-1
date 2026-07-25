@@ -1,6 +1,6 @@
 /* ============================================
    Theme System - CSS Custom Properties
-   Four premium themes: Cyberpunk, Nord, OLED, Forest
+   Cyberpunk theme
    ============================================ */
 
 :root {
@@ -67,79 +67,4 @@
   --border: rgba(0, 240, 255, 0.12);
   --chart-line: #00f0ff;
   --chart-fill: rgba(0, 240, 255, 0.1);
-}
-
-/* ============================================
-   Theme: Nord (Scandinavian Frost)
-   ============================================ */
-[data-theme="nord"] {
-  --background: #2e3440;
-  --background-secondary: #3b4252;
-  --background-tertiary: #434c5e;
-  --surface: #4c566a;
-  --text-dim: #4c566a;
-  --text-medium: #81a1c1;
-  --text-bright: #eceff4;
-  --primary: #88c0d0;
-  --primary-hover: #a3d1e0;
-  --primary-dim: rgba(136, 192, 208, 0.15);
-  --error: #bf616a;
-  --error-dim: rgba(191, 97, 106, 0.15);
-  --correct: #a3be8c;
-  --correct-dim: rgba(163, 190, 140, 0.12);
-  --incorrect: #bf616a;
-  --caret-color: #88c0d0;
-  --border: rgba(136, 192, 208, 0.15);
-  --chart-line: #88c0d0;
-  --chart-fill: rgba(136, 192, 208, 0.1);
-}
-
-/* ============================================
-   Theme: Dark OLED (Minimalist)
-   ============================================ */
-[data-theme="oled"] {
-  --background: #000000;
-  --background-secondary: #0a0a0a;
-  --background-tertiary: #141414;
-  --surface: #1a1a1a;
-  --text-dim: #444444;
-  --text-medium: #888888;
-  --text-bright: #ffffff;
-  --primary: #e0e0e0;
-  --primary-hover: #ffffff;
-  --primary-dim: rgba(224, 224, 224, 0.1);
-  --error: #ff3333;
-  --error-dim: rgba(255, 51, 51, 0.12);
-  --correct: #66bb6a;
-  --correct-dim: rgba(102, 187, 106, 0.1);
-  --incorrect: #ff3333;
-  --caret-color: #e0e0e0;
-  --border: rgba(224, 224, 224, 0.1);
-  --chart-line: #e0e0e0;
-  --chart-fill: rgba(224, 224, 224, 0.08);
-}
-
-/* ============================================
-   Theme: Forest (Nature Sage)
-   ============================================ */
-[data-theme="forest"] {
-  --background: #1a2421;
-  --background-secondary: #223029;
-  --background-tertiary: #2a3b32;
-  --surface: #334a3d;
-  --text-dim: #3f5c53;
-  --text-medium: #7a9e8f;
-  --text-bright: #e8f1ee;
-  --primary: #a3c9a8;
-  --primary-hover: #b8d9bc;
-  --primary-dim: rgba(163, 201, 168, 0.15);
-  --error: #e27396;
-  --error-dim: rgba(226, 115, 150, 0.15);
-  --correct: #a3c9a8;
-  --correct-dim: rgba(163, 201, 168, 0.12);
-  --incorrect: #e27396;
-  --caret-color: #a3c9a8;
-  --border: rgba(163, 201, 168, 0.15);
-  --chart-line: #a3c9a8;
-  --chart-fill: rgba(163, 201, 168, 0.1);
 }

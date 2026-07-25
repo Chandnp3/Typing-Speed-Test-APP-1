@@ -17,7 +17,7 @@
 
   <!-- ===== Header (hidden on auth screens) ===== -->
   <header class="header" id="app-header">
-    <a href="#" class="header__logo" id="btn-logo">
+    <a href="#" class="header__logo" id="btn-logo" data-screen="dashboard">
       <span class="header__logo-icon">T</span>
       TypeFlow
     </a>
@@ -41,7 +41,7 @@
 
       <div class="auth-error" id="login-error"></div>
 
-      <form id="login-form" class="auth-form" autocomplete="off">
+      <form id="login-form" class="auth-form">
         <div class="auth-field">
           <label class="auth-label" for="login-email">Email</label>
           <input type="email" class="auth-input" id="login-email" placeholder="you@example.com" required autocomplete="email">
@@ -70,7 +70,7 @@
 
       <div class="auth-error" id="register-error"></div>
 
-      <form id="register-form" class="auth-form" autocomplete="off">
+      <form id="register-form" class="auth-form">
         <div class="auth-field">
           <label class="auth-label" for="reg-nickname">Nickname</label>
           <input type="text" class="auth-input" id="reg-nickname" placeholder="Choose a display name" maxlength="20" required autocomplete="username">

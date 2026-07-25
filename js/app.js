@@ -226,10 +226,8 @@ const App = (() => {
         UI.showScreen('typing');
       };
     }
-    // Refresh dashboard when navigating to it from results
-    document.querySelectorAll('[data-screen="dashboard"]').forEach(btn => {
-      btn.addEventListener('click', () => _renderDashboard(state.user));
-    });
+    // NOTE: Dashboard navigation listeners are set up once in _setupNavigationListeners
+    // No additional listeners should be added here to avoid leaks
   }
 
   // ==========================================
@@ -291,7 +289,6 @@ const App = (() => {
       e.preventDefault();
       const state = AppState.getState();
       if (state.user) {
-        _renderDashboard(state.user);
         UI.showScreen('dashboard');
       }
     });

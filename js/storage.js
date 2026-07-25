@@ -50,11 +50,15 @@ const Storage = (() => {
       } catch (e) { /* fall through to simple hash */ }
     }
     // Fallback: djb2 hash (non-cryptographic, sufficient for localStorage)
-    let hash = 5381 + '_typeflow_salt';
+    let hash = 5381;
+    const salt = '_typeflow_salt';
+    for (let i = 0; i < salt.length; i++) {
+      hash = ((hash << 5) + hash + salt.charCodeAt(i)) & 0xFFFFFFFF;
+    }
     for (let i = 0; i < password.length; i++) {
       hash = ((hash << 5) + hash + password.charCodeAt(i)) & 0xFFFFFFFF;
     }
-    return 'fb_' + Math.abs(hash).toString(36) + '_' + password.length;
+    return 'fb_' + (hash >>> 0).toString(36);
   }
 
   // ---- User Registration ----
