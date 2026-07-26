@@ -4,290 +4,248 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TypeFlow — Typing Speed Test</title>
-  <meta name="description" content="Measure, analyze, and improve your typing speed and accuracy.">
+  <meta name="description" content="Measure, analyze, and improve your typing speed and accuracy with a beautiful, distraction-free experience.">
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
   <link rel="stylesheet" href="css/themes.css">
   <link rel="stylesheet" href="css/main.css">
+
+  <!-- Favicon (inline SVG) -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect rx='16' width='100' height='100' fill='%23f0e600'/><text x='50' y='68' font-size='55' text-anchor='middle' fill='%230b0e14' font-weight='bold' font-family='monospace'>T</text></svg>">
 </head>
 <body>
-<div id="app">
 
-  <!-- ===== Header (hidden on auth screens) ===== -->
-  <header class="header" id="app-header">
-    <a href="#" class="header__logo" id="btn-logo" data-screen="dashboard">
-      <span class="header__logo-icon">T</span>
-      TypeFlow
-    </a>
-    <div class="header__actions">
-      <button class="btn btn--ghost btn--icon" id="btn-dashboard" data-screen="dashboard" title="Dashboard">🏠</button>
-      <button class="btn btn--ghost btn--icon" id="btn-history" data-screen="history" title="History">📊</button>
-      <button class="btn btn--ghost btn--icon" id="btn-settings" data-screen="settings" title="Settings">⚙️</button>
-      <button class="btn btn--ghost btn--icon" id="btn-profile" data-screen="dashboard" title="Profile">👤</button>
-      <button class="btn btn--ghost btn--small" id="btn-logout" title="Logout">Logout</button>
+  <div id="app">
+    <!-- ===== Header ===== -->
+    <header class="header">
+      <a href="#" class="header__logo" data-screen="typing" id="btn-logo">
+        <span class="header__logo-icon">T</span>
+        TypeFlow
+      </a>
+      <div class="header__actions">
+        <button class="btn btn--ghost btn--icon" id="btn-history" data-screen="history" title="History">
+          History
+        </button>
+        <button class="btn btn--ghost btn--icon" id="btn-settings" data-screen="settings" title="Settings">
+          Setting
+        </button>
+        <button class="btn btn--ghost btn--icon" id="btn-profile" title="Profile">
+          Profile
+        </button>
+      </div>
+    </header>
+
+    <!-- ===== Screen: Login / Profile ===== -->
+    <div class="screen" id="screen-login">
+      <div class="login-card">
+        <div class="login-card__title">Welcome to TypeFlow</div>
+        <div class="login-card__subtitle">Set up your profile to get started</div>
+
+        <div class="login-card__avatars">
+          <button class="avatar-option avatar-option--selected" data-emoji="🧑‍💻" title="Developer">🧑‍💻</button>
+          <button class="avatar-option" data-emoji="👩‍💻" title="Coder">👩‍💻</button>
+          <button class="avatar-option" data-emoji="🎮" title="Gamer">🎮</button>
+          <button class="avatar-option" data-emoji="🦊" title="Fox">🦊</button>
+          <button class="avatar-option" data-emoji="🐱" title="Cat">🐱</button>
+          <button class="avatar-option" data-emoji="🚀" title="Rocket">🚀</button>
+          <button class="avatar-option" data-emoji="⚡" title="Lightning">⚡</button>
+          <button class="avatar-option" data-emoji="🎯" title="Target">🎯</button>
+        </div>
+
+        <input
+          type="text"
+          class="login-card__input"
+          id="login-nickname"
+          placeholder="Type your nickname..."
+          maxlength="20"
+          autocomplete="off"
+          spellcheck="false"
+        >
+
+        <button class="btn btn--primary" id="login-submit" style="width:100%;">
+          Start Typing →
+        </button>
+      </div>
     </div>
-  </header>
 
-  <!-- ===== Screen: Login ===== -->
-  <div class="screen screen--active" id="screen-login">
-    <div class="auth-card">
-      <div class="auth-card__logo">
-        <span class="auth-card__logo-icon">T</span>
-      </div>
-      <div class="auth-card__title">Welcome Back</div>
-      <div class="auth-card__subtitle">Sign in to continue your typing journey</div>
+    <!-- ===== Screen: Typing Test ===== -->
+    <div class="screen" id="screen-typing">
+      <div class="typing-screen">
 
-      <div class="auth-error" id="login-error"></div>
+        <!-- Mode & Duration Selectors -->
+        <div class="mode-bar">
+          <div class="mode-bar__group">
+            <button class="mode-bar__btn mode-bar__btn--active" data-mode="time">time</button>
+            <button class="mode-bar__btn" data-mode="words">words</button>
+          </div>
 
-      <form id="login-form" class="auth-form">
-        <div class="auth-field">
-          <label class="auth-label" for="login-email">Email</label>
-          <input type="email" class="auth-input" id="login-email" placeholder="you@example.com" required autocomplete="email">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label" for="login-password">Password</label>
-          <input type="password" class="auth-input" id="login-password" placeholder="Enter your password" required autocomplete="current-password">
-        </div>
-        <button type="submit" class="btn btn--primary auth-submit">Sign In</button>
-      </form>
+          <span class="mode-bar__label">·</span>
 
-      <div class="auth-switch">
-        Don't have an account? <a href="#" id="goto-register">Register</a>
-      </div>
-    </div>
-  </div>
+          <!-- Time Mode Options -->
+          <div class="mode-bar__group mode-options-time">
+            <button class="mode-bar__btn" data-duration="15">15</button>
+            <button class="mode-bar__btn mode-bar__btn--active" data-duration="30">30</button>
+            <button class="mode-bar__btn" data-duration="60">60</button>
+            <button class="mode-bar__btn" data-duration="120">120</button>
+          </div>
 
-  <!-- ===== Screen: Register ===== -->
-  <div class="screen" id="screen-register">
-    <div class="auth-card">
-      <div class="auth-card__logo">
-        <span class="auth-card__logo-icon">T</span>
-      </div>
-      <div class="auth-card__title">Create Account</div>
-      <div class="auth-card__subtitle">Join TypeFlow and start improving your typing</div>
-
-      <div class="auth-error" id="register-error"></div>
-
-      <form id="register-form" class="auth-form">
-        <div class="auth-field">
-          <label class="auth-label" for="reg-nickname">Nickname</label>
-          <input type="text" class="auth-input" id="reg-nickname" placeholder="Choose a display name" maxlength="20" required autocomplete="username">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label" for="reg-email">Email</label>
-          <input type="email" class="auth-input" id="reg-email" placeholder="you@example.com" required autocomplete="email">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label" for="reg-password">Password</label>
-          <input type="password" class="auth-input" id="reg-password" placeholder="Min 6 characters" minlength="6" required autocomplete="new-password">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label" for="reg-password-confirm">Confirm Password</label>
-          <input type="password" class="auth-input" id="reg-password-confirm" placeholder="Repeat your password" minlength="6" required autocomplete="new-password">
-        </div>
-
-        <div class="auth-field">
-          <label class="auth-label">Choose Your Avatar</label>
-          <div class="auth-avatars">
-            <button type="button" class="avatar-option avatar-option--selected" data-emoji="🧑‍💻" title="Developer">🧑‍💻</button>
-            <button type="button" class="avatar-option" data-emoji="👩‍💻" title="Coder">👩‍💻</button>
-            <button type="button" class="avatar-option" data-emoji="🎮" title="Gamer">🎮</button>
-            <button type="button" class="avatar-option" data-emoji="🦊" title="Fox">🦊</button>
-            <button type="button" class="avatar-option" data-emoji="🐱" title="Cat">🐱</button>
-            <button type="button" class="avatar-option" data-emoji="🚀" title="Rocket">🚀</button>
-            <button type="button" class="avatar-option" data-emoji="⚡" title="Lightning">⚡</button>
-            <button type="button" class="avatar-option" data-emoji="🎯" title="Target">🎯</button>
+          <!-- Word Mode Options (hidden by default) -->
+          <div class="mode-bar__group mode-options-words hidden">
+            <button class="mode-bar__btn" data-wordcount="10">10</button>
+            <button class="mode-bar__btn mode-bar__btn--active" data-wordcount="25">25</button>
+            <button class="mode-bar__btn" data-wordcount="50">50</button>
+            <button class="mode-bar__btn" data-wordcount="100">100</button>
           </div>
         </div>
 
-        <button type="submit" class="btn btn--primary auth-submit">Create Account</button>
-      </form>
-
-      <div class="auth-switch">
-        Already have an account? <a href="#" id="goto-login">Sign In</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== Screen: Dashboard ===== -->
-  <div class="screen" id="screen-dashboard">
-    <div class="dashboard">
-      <!-- Profile Header -->
-      <div class="dash-profile">
-        <div class="dash-profile__avatar" id="dash-avatar">🧑‍💻</div>
-        <div class="dash-profile__info">
-          <div class="dash-profile__name" id="dash-nickname">User</div>
-          <div class="dash-profile__email" id="dash-email">user@example.com</div>
-          <div class="dash-profile__joined" id="dash-joined">Member since Jan 2026</div>
-        </div>
-      </div>
-
-      <!-- Stats Cards -->
-      <div class="dash-stats">
-        <div class="dash-stat-card">
-          <div class="dash-stat-card__icon">🏆</div>
-          <div class="dash-stat-card__value" id="dash-best-wpm">0</div>
-          <div class="dash-stat-card__label">Best WPM</div>
-        </div>
-        <div class="dash-stat-card">
-          <div class="dash-stat-card__icon">📈</div>
-          <div class="dash-stat-card__value" id="dash-avg-wpm">0</div>
-          <div class="dash-stat-card__label">Avg WPM</div>
-        </div>
-        <div class="dash-stat-card">
-          <div class="dash-stat-card__icon">🎯</div>
-          <div class="dash-stat-card__value" id="dash-avg-acc">0%</div>
-          <div class="dash-stat-card__label">Avg Accuracy</div>
-        </div>
-        <div class="dash-stat-card">
-          <div class="dash-stat-card__icon">📝</div>
-          <div class="dash-stat-card__value" id="dash-total-tests">0</div>
-          <div class="dash-stat-card__label">Total Tests</div>
-        </div>
-      </div>
-
-      <!-- Quick Actions -->
-      <div class="dash-actions">
-        <button class="dash-action-btn" id="dash-start-test">
-          <span class="dash-action-btn__icon">⌨️</span>
-          <span class="dash-action-btn__text">Start Typing Test</span>
-          <span class="dash-action-btn__arrow">→</span>
-        </button>
-        <button class="dash-action-btn" data-screen="history">
-          <span class="dash-action-btn__icon">📊</span>
-          <span class="dash-action-btn__text">View Full History</span>
-          <span class="dash-action-btn__arrow">→</span>
-        </button>
-        <button class="dash-action-btn" data-screen="settings">
-          <span class="dash-action-btn__icon">⚙️</span>
-          <span class="dash-action-btn__text">Customize Settings</span>
-          <span class="dash-action-btn__arrow">→</span>
-        </button>
-      </div>
-
-      <!-- Recent Tests -->
-      <div class="dash-section">
-        <div class="dash-section__title">Recent Tests</div>
-        <div class="dash-recent" id="dash-recent-list">
-          <p class="dash-empty">No tests completed yet. Start typing!</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== Screen: Typing Test ===== -->
-  <div class="screen" id="screen-typing">
-    <div class="typing-screen">
-      <div class="mode-bar">
-        <div class="mode-bar__group">
-          <button class="mode-bar__btn mode-bar__btn--active" data-mode="time">time</button>
-          <button class="mode-bar__btn" data-mode="words">words</button>
-        </div>
-        <span class="mode-bar__label">·</span>
-        <div class="mode-bar__group mode-options-time">
-          <button class="mode-bar__btn" data-duration="15">15</button>
-          <button class="mode-bar__btn mode-bar__btn--active" data-duration="30">30</button>
-          <button class="mode-bar__btn" data-duration="60">60</button>
-          <button class="mode-bar__btn" data-duration="120">120</button>
-          <div class="custom-input-wrapper">
-            <input type="number" class="custom-input" id="custom-duration" min="5" max="300" placeholder="…" title="Custom time in seconds">
-            <span class="custom-input-label">s</span>
+        <!-- Live Stats -->
+        <div class="stats-bar">
+          <div class="stat">
+            <div class="stat__value" id="stat-wpm">0</div>
+            <div class="stat__label">wpm</div>
+          </div>
+          <div class="stat">
+            <div class="stat__value" id="stat-raw">0</div>
+            <div class="stat__label">raw</div>
+          </div>
+          <div class="stat">
+            <div class="stat__value" id="stat-accuracy">100%</div>
+            <div class="stat__label">accuracy</div>
           </div>
         </div>
-        <div class="mode-bar__group mode-options-words hidden">
-          <button class="mode-bar__btn" data-wordcount="10">10</button>
-          <button class="mode-bar__btn mode-bar__btn--active" data-wordcount="25">25</button>
-          <button class="mode-bar__btn" data-wordcount="50">50</button>
-          <button class="mode-bar__btn" data-wordcount="100">100</button>
-          <div class="custom-input-wrapper">
-            <input type="number" class="custom-input" id="custom-wordcount" min="5" max="500" placeholder="…" title="Custom word count">
-            <span class="custom-input-label">w</span>
+
+        <!-- Timer Bar -->
+        <div class="timer-bar">
+          <div class="timer-bar__fill" id="timer-fill"></div>
+        </div>
+
+        <!-- Typing Area -->
+        <div class="typing-area" id="typing-area" tabindex="-1">
+          <div class="typing-text" id="typing-text">
+            <!-- Words & caret rendered by JS -->
           </div>
         </div>
-      </div>
 
-      <div class="stats-bar">
-        <div class="stat"><div class="stat__value" id="stat-wpm">0</div><div class="stat__label">wpm</div></div>
-        <div class="stat"><div class="stat__value" id="stat-raw">0</div><div class="stat__label">raw</div></div>
-        <div class="stat"><div class="stat__value" id="stat-accuracy">100%</div><div class="stat__label">accuracy</div></div>
-      </div>
-
-      <div class="timer-bar"><div class="timer-bar__fill" id="timer-fill"></div></div>
-
-      <div class="typing-area" id="typing-area" tabindex="-1">
-        <div class="typing-text" id="typing-text"></div>
-      </div>
-
-      <div class="prompt-hint">
-        Press <kbd>Tab</kbd> or <kbd>Esc</kbd> to restart · <kbd>Space</kbd> to move to next word
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== Screen: Results ===== -->
-  <div class="screen" id="screen-results">
-    <div class="results-card">
-      <div class="results-card__title">Test Complete</div>
-      <div class="results__metrics">
-        <div><div class="results__metric-value" id="results-wpm">0</div><div class="results__metric-label">WPM</div></div>
-        <div><div class="results__metric-value" id="results-raw">0</div><div class="results__metric-label">Raw</div></div>
-        <div><div class="results__metric-value" id="results-accuracy">0%</div><div class="results__metric-label">Accuracy</div></div>
-      </div>
-      <div class="results__chart"><canvas id="results-chart"></canvas></div>
-      <div class="results__actions">
-        <button class="btn btn--primary" id="btn-restart">Try Again</button>
-        <button class="btn" id="btn-view-history">View History</button>
-        <button class="btn" data-screen="dashboard">Dashboard</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== Screen: Settings ===== -->
-  <div class="screen" id="screen-settings">
-    <div class="settings-panel">
-      <div class="settings-panel__title">Settings</div>
-      <div class="settings-section">
-        <div class="settings-section__label">Theme</div>
-        <div class="theme-grid">
-          <button class="theme-option theme-option--active" data-theme="cyberpunk"><span class="theme-option__dot" style="background:#00f0ff"></span><span class="theme-option__name">Cyberpunk</span></button>
-          <button class="theme-option" data-theme="nord"><span class="theme-option__dot" style="background:#88c0d0"></span><span class="theme-option__name">Nord</span></button>
-          <button class="theme-option" data-theme="oled"><span class="theme-option__dot" style="background:#e0e0e0"></span><span class="theme-option__name">OLED Dark</span></button>
-          <button class="theme-option" data-theme="forest"><span class="theme-option__dot" style="background:#a3c9a8"></span><span class="theme-option__name">Forest</span></button>
+        <div class="prompt-hint">
+          Press <kbd>Tab</kbd> or <kbd>Esc</kbd> to restart · <kbd>Space</kbd> to move to next word
         </div>
       </div>
-      <div style="margin-top:var(--gap-xl);">
-        <button class="btn" data-screen="dashboard" style="width:100%;justify-content:center;">← Back to Dashboard</button>
+    </div>
+
+    <!-- ===== Screen: Results ===== -->
+    <div class="screen" id="screen-results">
+      <div class="results-card">
+        <div class="results-card__title">Test Complete</div>
+
+        <div class="results__metrics">
+          <div>
+            <div class="results__metric-value" id="results-wpm">0</div>
+            <div class="results__metric-label">WPM</div>
+          </div>
+          <div>
+            <div class="results__metric-value" id="results-raw">0</div>
+            <div class="results__metric-label">Raw</div>
+          </div>
+          <div>
+            <div class="results__metric-value" id="results-accuracy">0%</div>
+            <div class="results__metric-label">Accuracy</div>
+          </div>
+        </div>
+
+        <div class="results__chart">
+          <canvas id="results-chart"></canvas>
+        </div>
+
+        <div class="results__actions">
+          <button class="btn btn--primary" id="btn-restart">Try Again</button>
+          <button class="btn" id="btn-view-history">View History</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- ===== Screen: History ===== -->
-  <div class="screen" id="screen-history">
-    <div class="history-section">
-      <div class="history-section__title">Your History</div>
-      <div class="history-stats">
-        <div class="history-stat-card"><div class="history-stat-card__value" id="history-total">0</div><div class="history-stat-card__label">Total Tests</div></div>
-        <div class="history-stat-card"><div class="history-stat-card__value" id="history-best">0</div><div class="history-stat-card__label">Best WPM</div></div>
-        <div class="history-stat-card"><div class="history-stat-card__value" id="history-avg">0</div><div class="history-stat-card__label">Average WPM</div></div>
-      </div>
-      <div class="history-list" id="history-list"></div>
-      <div style="margin-top:var(--gap-xl);text-align:center;">
-        <button class="btn btn--primary" id="btn-back-typing">Start New Test</button>
-        <button class="btn" data-screen="dashboard" style="margin-left:8px;">Dashboard</button>
+    <!-- ===== Screen: Settings ===== -->
+    <div class="screen" id="screen-settings">
+      <div class="settings-panel">
+        <div class="settings-panel__title">Settings</div>
+
+        <div class="settings-section">
+          <div class="settings-section__label">Theme</div>
+          <div class="theme-grid">
+            <button class="theme-option theme-option--active" data-theme="cyberpunk">
+              <span class="theme-option__dot" style="background:#00f0ff"></span>
+              <span class="theme-option__name">Cyberpunk</span>
+            </button>
+            <button class="theme-option" data-theme="nord">
+              <span class="theme-option__dot" style="background:#88c0d0"></span>
+              <span class="theme-option__name">Nord</span>
+            </button>
+            <button class="theme-option" data-theme="oled">
+              <span class="theme-option__dot" style="background:#e0e0e0"></span>
+              <span class="theme-option__name">OLED Dark</span>
+            </button>
+            <button class="theme-option" data-theme="forest">
+              <span class="theme-option__dot" style="background:#a3c9a8"></span>
+              <span class="theme-option__name">Forest</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="margin-top:var(--gap-xl);">
+          <button class="btn" data-screen="typing" style="width:100%;justify-content:center;">
+            ← Back to Typing
+          </button>
+        </div>
       </div>
     </div>
+
+    <!-- ===== Screen: History ===== -->
+    <div class="screen" id="screen-history">
+      <div class="history-section">
+        <div class="history-section__title">Your History</div>
+
+        <div class="history-stats">
+          <div class="history-stat-card">
+            <div class="history-stat-card__value" id="history-total">0</div>
+            <div class="history-stat-card__label">Total Tests</div>
+          </div>
+          <div class="history-stat-card">
+            <div class="history-stat-card__value" id="history-best">0</div>
+            <div class="history-stat-card__label">Best WPM</div>
+          </div>
+          <div class="history-stat-card">
+            <div class="history-stat-card__value" id="history-avg">0</div>
+            <div class="history-stat-card__label">Average WPM</div>
+          </div>
+        </div>
+
+        <div class="history-list" id="history-list">
+          <p style="text-align:center;color:var(--text-dim);padding:40px 0;">No tests completed yet. Start typing!</p>
+        </div>
+
+        <div style="margin-top:var(--gap-xl);text-align:center;">
+          <button class="btn btn--primary" id="btn-back-typing">
+            Start New Test
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Footer ===== -->
+    <footer class="footer">
+      <span>TypeFlow · Built with Vanilla JS</span>
+      <span>·</span>
+      <span>Press <kbd style="font-family:var(--font-mono);padding:1px 5px;background:var(--surface);border:1px solid var(--glass-border);border-radius:3px;font-size:11px;">Tab</kbd> to restart</span>
+    </footer>
   </div>
 
-  <!-- ===== Footer ===== -->
-  <footer class="footer" id="app-footer">
-    <span>TypeFlow · Built with Vanilla JS</span>
-    <span>·</span>
-    <span>Press <kbd style="font-family:var(--font-mono);padding:1px 5px;background:var(--surface);border:1px solid var(--glass-border);border-radius:3px;font-size:11px;">Tab</kbd> to restart</span>
-  </footer>
+  <!-- App Entry Point -->
+  <script type="module" src="js/app.js"></script>
 
-</div>
-<script type="module" src="js/app.js"></script>
+
 </body>
 </html>
