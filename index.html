@@ -137,11 +137,11 @@
       </div>
     </div>
 
-    <!-- ===== Screen: Results ===== -->
     <div class="screen" id="screen-results">
       <div class="results-card">
         <div class="results-card__title">Test Complete</div>
 
+        <!-- Primary metrics row -->
         <div class="results__metrics">
           <div>
             <div class="results__metric-value" id="results-wpm">0</div>
@@ -155,6 +155,28 @@
             <div class="results__metric-value" id="results-accuracy">0%</div>
             <div class="results__metric-label">Accuracy</div>
           </div>
+        </div>
+
+        <!-- Extended metrics row -->
+        <div class="results__metrics results__metrics--extended">
+          <div>
+            <div class="results__metric-value results__metric-value--secondary" id="results-burst">0</div>
+            <div class="results__metric-label">Burst WPM</div>
+          </div>
+          <div>
+            <div class="results__metric-value results__metric-value--secondary" id="results-consistency">100%</div>
+            <div class="results__metric-label">Consistency</div>
+          </div>
+          <div>
+            <div class="results__metric-value results__metric-value--secondary" id="results-avg-word-time">0ms</div>
+            <div class="results__metric-label">Avg Word Time</div>
+          </div>
+        </div>
+
+        <!-- Problem Words -->
+        <div class="results__problem-words" id="results-problem-words-section" style="display:none;">
+          <div class="results__problem-label">Words to practise</div>
+          <div class="results__problem-list" id="results-problem-words"></div>
         </div>
 
         <div class="results__chart">

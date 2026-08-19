@@ -18,9 +18,17 @@ export function init() {
   _cache.statAccuracy = document.getElementById('stat-accuracy');
   _cache.timerFill = document.getElementById('timer-fill');
   _cache.typingText = document.getElementById('typing-text');
+  // Primary results
   _cache.resultsWpm = document.getElementById('results-wpm');
   _cache.resultsRaw = document.getElementById('results-raw');
   _cache.resultsAccuracy = document.getElementById('results-accuracy');
+  // Extended results (new)
+  _cache.resultsBurst = document.getElementById('results-burst');
+  _cache.resultsConsistency = document.getElementById('results-consistency');
+  _cache.resultsAvgWordTime = document.getElementById('results-avg-word-time');
+  _cache.resultsProblemSection = document.getElementById('results-problem-words-section');
+  _cache.resultsProblemList = document.getElementById('results-problem-words');
+  // History
   _cache.historyTotal = document.getElementById('history-total');
   _cache.historyBest = document.getElementById('history-best');
   _cache.historyAvg = document.getElementById('history-avg');
@@ -180,4 +188,117 @@ export function flashError() {
   }
 }
 
-export default { init, applyTheme, renderTypingText, positionCaret, updateCharStatus, highlightActive, scrollActiveWordIntoView, updateStats, updateTimer, startTimer, setActiveMode, setActiveDuration, setActiveWordCount, setCaretTyping, flashError };
+/**
+ * Show a named screen, hiding all others.
+ * @param {string} screenId - e.g. 'typing', 'results', 'dashboard', 'history'
+ */
+export function showScreen(screenId) {
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('screen--active'));
+  const target = document.getElementById(`screen-${screenId}`);
+  if (target) target.classList.add('screen--active');
+}
+
+export function setHeaderVisible(visible) {
+  if (_cache.header) _cache.header.style.display = visible ? '' : 'none';
+}
+
+/**
+ * Populate the results screen with stats from the completed test.
+ * Handles primary metrics (WPM, Raw, Accuracy) and all new extended
+ * metrics (Burst WPM, Consistency, Avg Word Time, Problem Words).
+ *
+ * @param {object} stats
+ * @param {number} stats.finalWpm
+ * @param {number} stats.finalRawWpm
+ * @param {number} stats.finalAccuracy
+ * @param {number} [stats.burstWpm]
+ * @param {number} [stats.consistency]
+ * @param {number} [stats.avgWordTime]
+ * @param {Array}  [stats.problemWords] - [{word, errors}]
+ */
+export function showResults(stats) {
+  // Primary
+  if (_cache.resultsWpm) _cache.resultsWpm.textContent = stats.finalWpm;
+  if (_cache.resultsRaw) _cache.resultsRaw.textContent = stats.finalRawWpm;
+  if (_cache.resultsAccuracy) _cache.resultsAccuracy.textContent = stats.finalAccuracy + '%';
+
+  // Extended — Burst WPM
+  if (_cache.resultsBurst) _cache.resultsBurst.textContent = stats.burstWpm ?? 0;
+
+  // Extended — Consistency
+  if (_cache.resultsConsistency) {
+    _cache.resultsConsistency.textContent = (stats.consistency ?? 100) + '%';
+  }
+
+  // Extended — Avg Word Time
+  if (_cache.resultsAvgWordTime) {
+    const ms = stats.avgWordTime ?? 0;
+    _cache.resultsAvgWordTime.textContent = ms > 0 ? ms + 'ms' : '—';
+  }
+
+  // Problem Words
+  const problemWords = stats.problemWords || [];
+  if (_cache.resultsProblemSection && _cache.resultsProblemList) {
+    if (problemWords.length > 0) {
+      _cache.resultsProblemSection.style.display = '';
+      _cache.resultsProblemList.innerHTML = problemWords.map(pw =>
+        `<span class="problem-word" title="${pw.errors} error${pw.errors !== 1 ? 's' : ''}">${pw.word}</span>`
+      ).join('');
+    } else {
+      _cache.resultsProblemSection.style.display = 'none';
+    }
+  }
+
+  showScreen('results');
+}
+
+/**
+ * Render the history screen using scores from Storage.
+ */
+export function renderHistory() {
+  // Import lazily to avoid a circular reference at module load time
+  import('./storage.js').then(mod => {
+    const Storage = mod.default;
+    // Get current user id from session storage key
+    const userId = Storage.getSession();
+    if (!userId) return;
+    const scores = Storage.getScores(userId);
+    const stats  = Storage.getAggregateStats(userId);
+
+    if (_cache.historyTotal) _cache.historyTotal.textContent = stats.totalTests;
+    if (_cache.historyBest)  _cache.historyBest.textContent  = stats.bestWpm;
+    if (_cache.historyAvg)   _cache.historyAvg.textContent   = stats.avgWpm;
+
+    if (_cache.historyList) {
+      _cache.historyList.innerHTML = '';
+      if (scores.length === 0) {
+        _cache.historyList.innerHTML = '<p class="dash-empty">No tests yet — start typing!</p>';
+        return;
+      }
+      scores.forEach(score => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        const d = new Date(score.date);
+        const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const consistency = score.consistency != null ? ` · ${score.consistency}% consist.` : '';
+        const burstStr    = score.burstWpm    != null ? ` · ${score.burstWpm} burst`        : '';
+        item.innerHTML = `
+          <div class="history-item__wpm">${score.wpm || 0}</div>
+          <div class="history-item__details">
+            <div style="color:var(--text-bright);font-weight:500;">WPM</div>
+            <div>${dateStr} ${timeStr} · ${score.mode || 'time'} ${score.duration || 30}s${burstStr}${consistency}</div>
+          </div>
+          <div class="history-item__accuracy">${score.accuracy || 0}%</div>`;
+        _cache.historyList.appendChild(item);
+      });
+    }
+  }).catch(err => console.warn('renderHistory: storage import failed', err));
+}
+
+export default {
+  init, applyTheme, renderTypingText, positionCaret, updateCharStatus,
+  highlightActive, scrollActiveWordIntoView, updateStats, updateTimer,
+  startTimer, setActiveMode, setActiveDuration, setActiveWordCount,
+  setCaretTyping, flashError, showScreen, setHeaderVisible, showResults, renderHistory
+};

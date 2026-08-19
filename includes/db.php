@@ -4,14 +4,13 @@
  * Include this file to get a PDO connection to the database.
  *
  * Priority:
- *   1. config.php (if exists in project root — for Hostinger)
+ *   1. config.php (if it exists in the project root)
  *   2. Environment variables (DB_HOST, DB_NAME, DB_USER, DB_PASS)
- *   3. Default credentials below (configured for Hostinger)
+ *   3. XAMPP local defaults below (root / no password / typeflow)
  *
- * ⚠️ For LOCAL XAMPP development:
- *    Set these env vars in your system or create a local config.php:
- *      DB_HOST=localhost, DB_USER=root, DB_PASS=, DB_NAME=typeflow
+ * For Hostinger/production: update config.php with hosting credentials.
  */
+
 
 // Load config.php from the project root if it exists (can override defaults)
 $configPath = __DIR__ . '/../config.php';
@@ -22,11 +21,11 @@ if (file_exists($configPath)) {
 function getDB(): PDO {
     static $pdo = null;
     if ($pdo === null) {
-        // ---- HOSTINGER CREDENTIALS (default) ----
+        // ---- LOCAL XAMPP defaults (overridden by config.php or env vars) ----
         $host   = defined('DB_HOST') ? DB_HOST : (getenv('DB_HOST') ?: 'localhost');
-        $dbname = defined('DB_NAME') ? DB_NAME : (getenv('DB_NAME') ?: 'u137901368_u123456789bd');
-        $user   = defined('DB_USER') ? DB_USER : (getenv('DB_USER') ?: 'u137901368_u123456789ad');
-        $pass   = defined('DB_PASS') ? DB_PASS : (getenv('DB_PASS') ?: 'Maya@349');
+        $dbname = defined('DB_NAME') ? DB_NAME : (getenv('DB_NAME') ?: 'typeflow');
+        $user   = defined('DB_USER') ? DB_USER : (getenv('DB_USER') ?: 'root');
+        $pass   = defined('DB_PASS') ? DB_PASS : (getenv('DB_PASS') ?: '');
 
         try {
             $pdo = new PDO(

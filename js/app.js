@@ -491,12 +491,25 @@ const App = (() => {
     _stopTimer();
     UI.setCaretTyping(false);
     const state = AppState.getState();
-    const stats = { finalWpm: state.finalWpm || 0, finalRawWpm: state.finalRawWpm || 0, finalAccuracy: state.finalAccuracy || 100 };
+    const stats = {
+      finalWpm: state.finalWpm || 0,
+      finalRawWpm: state.finalRawWpm || 0,
+      finalAccuracy: state.finalAccuracy || 100,
+      burstWpm: state.burstWpm || 0,
+      consistency: state.consistency ?? 100,
+      avgWordTime: state.avgWordTime || 0,
+      problemWords: state.problemWords || []
+    };
 
     if (state.user) {
       Storage.addScore(state.user.id, {
-        wpm: stats.finalWpm, rawWpm: stats.finalRawWpm, accuracy: stats.finalAccuracy,
-        mode: state.mode, duration: state.mode === 'time' ? state.selectedDuration : state.selectedWordCount,
+        wpm: stats.finalWpm,
+        rawWpm: stats.finalRawWpm,
+        accuracy: stats.finalAccuracy,
+        burstWpm: stats.burstWpm,
+        consistency: stats.consistency,
+        mode: state.mode,
+        duration: state.mode === 'time' ? state.selectedDuration : state.selectedWordCount,
         wordsTyped: state.currentIndex.word
       });
     }

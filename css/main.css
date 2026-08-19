@@ -271,11 +271,19 @@ body {
 .results-card { background: var(--background-secondary); border: 1px solid var(--glass-border); border-radius: var(--radius-lg); padding: var(--gap-xxl) var(--gap-xl); box-shadow: var(--glass-shadow); max-width: 700px; width: 100%; text-align: center; animation: fadeIn 0.5s ease; }
 .results-card__title { font-size: 20px; font-weight: 600; color: var(--text-bright); margin-bottom: var(--gap-lg); }
 .results__metrics { display: flex; justify-content: center; gap: var(--gap-xxl); margin-bottom: var(--gap-xl); flex-wrap: wrap; }
+.results__metrics--extended { gap: var(--gap-xl); margin-bottom: var(--gap-lg); opacity: 0.85; }
 .results__metric-value { font-family: var(--font-sans); font-size: var(--text-metrics); font-weight: 300; color: var(--primary); line-height: 1; }
+.results__metric-value--secondary { font-size: calc(var(--text-metrics) * 0.6); color: var(--text-bright); }
 .results__metric-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-top: var(--gap-sm); font-weight: 600; }
 .results__chart { background: var(--background-tertiary); border: 1px solid var(--glass-border); border-radius: var(--radius-md); padding: var(--gap-md); margin-bottom: var(--gap-xl); }
 .results__chart canvas { width: 100% !important; height: 200px !important; }
 .results__actions { display: flex; justify-content: center; gap: var(--gap-md); flex-wrap: wrap; }
+/* Problem Words */
+.results__problem-words { margin-bottom: var(--gap-xl); }
+.results__problem-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); font-weight: 600; margin-bottom: var(--gap-sm); }
+.results__problem-list { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--gap-sm); }
+.problem-word { padding: 4px 12px; background: var(--error-dim, rgba(255,60,60,0.12)); border: 1px solid var(--error-color, rgba(255,80,80,0.4)); border-radius: var(--radius-full); font-size: 13px; color: var(--text-bright); font-family: var(--font-mono, monospace); cursor: default; transition: background var(--transition-fast); }
+.problem-word:hover { background: rgba(255,80,80,0.2); }
 
 /* ============================================
    Settings Panel

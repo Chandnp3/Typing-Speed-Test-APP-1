@@ -21,7 +21,14 @@ const AppState = (() => {
     selectedDuration: 30,
     selectedWordCount: 25,
     customText: '',
-    user: null
+    user: null,
+    // ---- Enhanced algorithm state ----
+    wordTimes: [],         // Array of ms taken to complete each word
+    wordStartTime: null,   // performance.now() when current word started
+    wordErrors: {},        // { [word]: errorCount } — tracks per-word mistakes
+    burstWpm: 0,           // Peak WPM in any 3-second window
+    consistency: 100,      // 0–100 score (inverse of WPM std-dev coefficient)
+    problemWords: []       // Top-5 most-missed words from this test
   };
 
   const _listeners = new Map();
@@ -63,7 +70,14 @@ const AppState = (() => {
       startTime: null,
       elapsedTime: 0,
       testStartTime: null,
-      timeLeft: _state.duration
+      timeLeft: _state.duration,
+      // Reset enhanced state
+      wordTimes: [],
+      wordStartTime: null,
+      wordErrors: {},
+      burstWpm: 0,
+      consistency: 100,
+      problemWords: []
     };
     setState({ ...defaults, ...overrides });
   }
@@ -86,7 +100,14 @@ const AppState = (() => {
       selectedDuration: 30,
       selectedWordCount: 25,
       customText: '',
-      user: null
+      user: null,
+      // Enhanced algorithm state
+      wordTimes: [],
+      wordStartTime: null,
+      wordErrors: {},
+      burstWpm: 0,
+      consistency: 100,
+      problemWords: []
     };
     _notify(Object.keys(_state));
   }

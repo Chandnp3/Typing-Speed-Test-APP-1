@@ -1,300 +1,252 @@
 /**
  * engine.js - Core Typing Engine
- * Word generation, keystroke parsing, character alignment, WPM/accuracy calculation
+ * Word generation, keystroke parsing, character alignment, WPM/accuracy calculation.
+ *
+ * ALGORITHMS IMPLEMENTED:
+ *  1. Fisher-Yates shuffle          — uniform random word distribution
+ *  2. Weighted adaptive word pool   — frequently-missed words appear more often
+ *  3. WPM / Raw WPM                 — (correct chars / 5) / elapsed minutes
+ *  4. Burst WPM                     — peak WPM in any 3-second sliding window
+ *  5. Consistency score             — 100 - (std-dev/mean * 100), clamped 0-100
+ *  6. Per-word timing               — ms to complete each word
+ *  7. Per-word error tracking       — miss count per word across sessions
+ *  8. Extended timeline             — per-tick: wpm, raw, accuracy, errors, burst
  */
 
 import AppState from './state.js';
 
 const Engine = (() => {
-  // ---- Word Dictionaries by Difficulty ----
-  // Easy: short, common 3-4 letter words
+  // ============================================================
+  // Word Dictionaries by Difficulty
+  // ============================================================
+
+  // Easy: short, high-frequency 3-5 letter words
   const EASY_WORDS = [
     'the','and','for','are','but','not','you','all','can','had','her','was','one','our','out',
     'has','its','two','use','see','now','may','way','new','get','how','man','his','old','own',
-    'set','say','sat','ran','run','big','red','hot','put','let','ask','men','say','few','got',
-    'eat','bit','hit','sit','top','far','cut','yes','pay','fat','dog','cat','bed','cup','fun',
-    'sun','big','box','buy','car','day','eat','end','eye','fly','god','hat','ice','joy','key',
-    'law','leg','lie','lip','log','map','mix','net','oil','owe','pan','pen','pie','pin','pot',
-    'raw','row','rub','sad','sea','sir','six','sky','son','tap','tea','tie','tin','tip','toe',
-    'toy','van','war','wet','win','yet','age','ago','air','arm','art','bag','ball','band','bank',
-    'base','bath','bear','beat','bell','best','bird','bite','blow','blue','boat','body','bomb',
-    'bone','book','born','boss','both','burn','busy','cafe','cake','call','calm','camp','card',
-    'care','case','cash','cast','cave','cell','chat','chip','city','club','coat','code','cold',
-    'come','cook','cool','copy','cord','corn','cost','crew','crop','crowd','cure','dance','date',
-    'dawn','dead','deal','dear','deep','deer','desk','diet','dirt','dish','dock','does','doll',
-    'door','dose','down','draft','drag','draw','dress','drink','drop','drug','drum','dual','dull',
-    'dumb','dump','dust','duty','each','earn','ease','east','edge','else','even','ever','evil',
-    'exam','exit','face','fact','fail','fair','fake','fall','fame','farm','fast','fate','fear',
-    'feed','feel','fell','fence','file','fill','film','find','fine','fire','firm','fish','five',
-    'flag','flat','flee','flew','flex','flip','float','flood','floor','flow','flower','fold',
-    'folk','fond','food','fool','foot','ford','fore','fork','form','fort','four','free','from',
-    'fuel','full','fund','fuss','gain','game','gang','gape','garden','gas','gate','gather','gave',
-    'gaze','gear','gift','girl','give','glad','glow','glue','goal','goat','goes','gold','golf',
-    'gone','good','grab','grass','gray','grew','grin','grip','grow','guard','guess','guest',
-    'guide','gulf','guy','habit','hail','hair','half','hall','hand','hang','happy','hard','harm',
-    'harsh','harvest','hatch','hate','haul','have','head','heal','heap','hear','heat','heavy',
-    'heel','held','hell','help','here','hero','hide','high','hill','hint','hire','hobby','hold',
-    'hole','home','hook','hope','horn','horse','host','hotel','hour','house','huge','hull','hunt',
-    'hurt','husband','ice','idea','inch','into','iron','island','item','jacket','jail','jam','jar',
-    'jaw','jazz','jeans','jet','jewel','job','join','joke','joy','judge','juice','jump','just',
-    'keen','keep','ketch','key','kick','kid','kill','kind','king','kiss','kitchen','knee','knife',
-    'knock','knot','know','label','lace','lack','lady','lake','lamp','land','lap','large','last',
-    'late','laugh','launch','law','lay','lazy','lead','leaf','league','lean','leap','learn','lease',
-    'leave','left','leg','legal','lemon','lend','length','lesson','let','letter','level','lie',
-    'life','lift','light','like','limit','line','link','lion','lip','list','listen','little','live',
-    'load','loan','lock','log','long','look','lord','lose','loss','lost','lot','loud','love','luck',
-    'lunch','lung','mad','made','magic','main','make','man','many','map','march','mark','market',
-    'mass','match','mate','may','maybe','mayor','meal','mean','measure','meat','meet','member',
-    'menu','mere','mess','metal','meter','mid','might','mild','mile','milk','mill','mind','mine',
-    'minor','minute','miss','mix','model','mom','moment','money','monk','month','mood','moon',
-    'moral','more','most','mother','motor','mountain','mouse','mouth','move','movie','much','mud',
-    'music','myth','nail','name','narrow','nation','native','nature','near','nearly','neat','neck',
-    'need','needle','neighbor','neither','nerve','nest','net','network','never','new','news','next',
-    'nice','night','nine','noble','noise','none','noon','nor','norm','north','nose','not','note',
-    'nothing','notice','novel','now','number','nurse','nut','oak','object','observe','obtain','occupy',
-    'ocean','odd','off','offer','office','often','oil','okay','old','olive','once','one','onion',
-    'open','option','or','orange','orbit','order','organ','other','ought','ounce','our','outcome',
-    'outer','output','oven','over','own','oxygen','pack','page','paid','pain','paint','pair','palace',
-    'pan','panel','panic','paper','parent','park','part','party','pass','passage','past','path','pause',
-    'pay','peace','peak','pen','pencil','people','per','period','permit','person','pet','phase','phone',
-    'photo','phrase','piano','pick','picture','piece','pig','pile','pin','pink','pipe','plane','plant',
-    'plate','play','player','pleasure','plenty','plug','plus','pocket','poem','poet','point','poison',
-    'pole','police','pool','poor','popular','port','pose','position','post','potato','powder','power',
-    'practice','pray','prefer','present','press','price','pride','prime','print','prior','prison',
-    'private','prize','problem','process','produce','profit','program','project','proper','prove',
-    'psychology','public','pull','pump','punish','pupil','purchase','pure','purpose','push','put',
-    'quality','quarter','queen','question','quick','quiet','quit','quite','quote','race','radio','rain',
-    'raise','range','rapid','rate','rather','raw','reach','read','ready','real','reason','receive',
-    'record','red','region','reject','relate','release','relief','religion','rely','remain','remember',
-    'remove','rent','repair','repeat','replace','report','represent','request','reset','resign','resist',
-    'resolution','resolve','resource','respond','rest','restore','result','retain','retire','return',
-    'reveal','review','revolution','reward','rhythm','rice','rich','ride','ring','riot','rise','risk',
-    'river','road','rock','role','roll','romantic','roof','room','root','rope','rose','rough','round',
-    'route','row','royal','rubber','rude','rug','rule','run','rural','rush','sacred','sad','safe',
-    'safety','sail','salad','salary','sale','salt','same','sample','sand','satisfy','save','scale',
-    'scene','school','science','score','screen','sea','search','season','seat','second','secret',
-    'section','secure','seed','seek','select','self','sell','senate','send','senior','sense','sentence',
-    'separate','sequence','serve','service','session','set','settle','seven','sex','shadow','shake',
-    'shall','shape','share','sharp','she','sheet','shelf','shell','shelter','shift','shine','ship',
-    'shirt','shock','shoe','shoot','shop','shore','short','shot','should','shoulder','shout','show',
-    'shut','side','sight','sign','signal','silence','silver','similar','simple','sin','since','sing',
-    'single','sink','sister','sit','site','situation','six','size','skill','skin','sky','slave','sleep',
-    'slice','slide','slight','slip','slow','small','smart','smell','smile','smoke','smooth','snap','snow',
-    'soap','social','society','soft','soil','solar','soldier','solid','solution','some','son','song',
-    'soon','sort','sound','source','south','space','speak','special','speech','speed','spell','spend',
-    'spirit','split','sport','spot','spread','spring','square','stable','staff','stage','stair','stand',
-    'standard','star','stare','start','state','station','status','stay','steady','steal','steam','steel',
-    'step','stick','still','stock','stomach','stone','stop','store','storm','story','stove','stream',
-    'street','strength','stretch','strike','string','strip','strong','structure','student','study','stuff',
-    'style','subject','submit','substance','succeed','success','such','suffer','sugar','suggest','summer',
-    'sun','super','supply','support','suppose','sure','surface','surgery','surprise','surround','survey',
-    'survive','suspect','sweet','swim','swing','switch','symbol','system','table','tail','take','tale',
-    'talent','talk','tank','tape','target','task','taste','tax','teach','teacher','team','tear','telephone',
-    'television','tell','ten','tend','tennis','term','test','text','than','thank','that','theme','then',
-    'theory','therapy','there','thick','thin','thing','think','third','this','thought','thousand','thread',
-    'threat','three','throat','through','throw','thumb','ticket','tide','tie','tight','till','time','tiny',
-    'tip','tire','title','toast','today','together','tomorrow','tone','tongue','tonight','tool','tooth',
-    'top','total','touch','tour','toward','tower','town','toy','track','trade','traffic','train','transfer',
-    'transform','travel','treat','treatment','tree','trend','trial','tribe','trick','trip','troop','trouble',
-    'truck','true','truly','trust','truth','try','tube','turn','twice','twin','type','uncle','under',
-    'understand','unit','universe','university','unless','unlike','until','unusual','update','upon','upper',
-    'upset','urban','urge','use','used','useful','user','usual','valley','value','van','variety','various',
-    'vast','vehicle','venture','version','very','vessel','veteran','via','victim','victory','video','view',
-    'village','violence','virtue','vision','visit','visual','vital','voice','volume','vote','wage','wait',
-    'wake','walk','wall','wander','want','war','warm','warn','wash','waste','watch','water','wave','way',
-    'weak','wealth','weapon','wear','weather','web','wedding','week','weekend','weight','welcome','well',
-    'west','western','wet','wheel','when','where','whether','which','while','whisper','white','whole','wide',
-    'wife','wild','will','win','wind','window','wine','wing','winner','winter','wire','wise','wish','with',
-    'within','without','witness','woman','wonder','wood','word','work','worker','world','worry','worth',
-    'would','wrap','write','writer','wrong','yard','year','yellow','yes','yesterday','yet','yield','you',
-    'young','your','yourself','youth','zero','zone'
+    'set','say','ran','run','big','red','hot','put','let','ask','few','got','eat','bit','hit',
+    'sit','top','far','cut','yes','pay','fat','dog','cat','bed','cup','fun','sun','box','buy',
+    'car','day','end','eye','fly','hat','ice','joy','key','law','leg','lie','lip','log','map',
+    'mix','net','oil','pan','pen','pie','pin','pot','raw','row','rub','sad','sea','six','sky',
+    'son','tap','tea','tie','tin','tip','toe','toy','van','war','wet','win','yet','age','ago',
+    'air','arm','art','bag','ball','band','bank','base','bath','bear','beat','bell','best',
+    'bird','bite','blow','blue','boat','body','bone','book','boss','both','burn','busy','cake',
+    'call','calm','camp','card','care','case','cash','cave','cell','chat','chip','city','club',
+    'coat','code','cold','come','cook','cool','copy','cord','corn','cost','crew','crop','cure',
+    'dance','date','dawn','dead','deal','dear','deep','deer','desk','dirt','dish','dock','door',
+    'dose','down','drag','draw','drop','drum','dust','duty','each','earn','ease','east','edge',
+    'even','ever','evil','face','fact','fail','fair','fake','fall','fame','farm','fast','fear',
+    'feed','feel','fell','file','fill','film','find','fine','fire','firm','fish','five','flag',
+    'flat','flee','flew','flex','flip','flow','fold','folk','fond','food','fool','foot','fork',
+    'form','fort','four','free','fuel','full','fund','gain','game','gang','gate','gave','gear',
+    'gift','girl','give','glad','glow','glue','goal','goat','gold','golf','gone','good','grab',
+    'gray','grew','grin','grip','grow','guy','hail','hair','half','hall','hand','hang','hard',
+    'harm','hate','haul','have','head','heal','heap','hear','heat','heel','held','hell','help',
+    'here','hero','hide','high','hill','hint','hire','hold','hole','home','hook','hope','horn',
+    'host','hour','huge','hull','hunt','hurt','idea','inch','into','iron','item','jail','jam',
+    'jar','jaw','jet','job','join','joke','jump','just','keen','keep','kick','kid','kill','kind',
+    'king','kiss','knee','knot','know','lack','lady','lake','lamp','land','lap','last','late',
+    'laugh','lead','leaf','lean','leap','learn','left','lend','lie','lift','like','line','link',
+    'lion','list','live','load','loan','lock','long','look','lord','lose','loss','lot','loud',
+    'love','luck','lung','made','main','make','many','mark','mass','mate','meal','mean','meat',
+    'meet','mere','mess','mild','mile','milk','mill','mind','mine','miss','mode','monk','mood',
+    'moon','more','most','move','much','mud','nail','name','near','neck','need','nice','nine',
+    'none','noon','nor','nose','note','oak','odd','off','okay','once','open','our','oven','over',
+    'pack','page','paid','pain','pair','pan','park','part','pass','path','pay','peak','pig',
+    'pile','pink','pipe','play','plot','plug','plus','poem','poet','pole','pool','poor','port',
+    'pose','post','pull','pump','pure','push','race','rain','raise','range','rate','read','real',
+    'rent','rest','rice','rich','ride','ring','rise','risk','road','rock','role','roll','roof',
+    'room','root','rope','rose','rough','round','route','row','rude','rug','rule','rush','safe',
+    'sail','salt','same','sand','save','sea','seat','seed','self','sell','send','set','seven',
+    'sex','shake','shape','share','sharp','sheet','shelf','shell','ship','shirt','shock','shoe',
+    'shop','shore','short','shot','show','shut','side','sign','silk','sing','sink','site','six',
+    'size','skin','sky','sleep','slip','slow','small','smart','smile','smoke','snap','snow',
+    'soap','soft','soil','some','song','soon','sort','soul','space','speak','spend','spin',
+    'split','spot','star','stay','stem','step','stick','still','stone','stop','store','storm',
+    'story','stove','strip','stuff','style','such','sugar','suit','sure','surf','swim','tail',
+    'tale','talk','tank','tape','task','taste','tax','team','tear','tell','ten','term','test',
+    'text','than','that','theme','then','thick','thin','thing','think','this','thread','throw',
+    'time','tiny','tire','title','tone','tool','tooth','tour','town','track','train','tree',
+    'trend','trip','true','trust','try','tube','turn','twin','type','unit','upon','urge','used',
+    'vast','very','view','vine','wait','walk','wall','want','warm','wash','wave','weak','wear',
+    'week','well','west','when','wide','wife','wild','will','wind','wine','wing','wire','wise',
+    'wish','word','work','yard','year','zero','zone'
   ];
 
-  // Normal: medium-difficulty words (current list ~500 common words)
+  // Normal: ~500 common English words covering a broad vocabulary range
   const NORMAL_WORDS = [
-    'the','be','to','of','and','a','in','that','have','i','it','for','not','on','with',
-    'he','as','you','do','at','this','but','his','by','from','they','we','say','her','she',
-    'or','an','will','my','one','all','would','there','their','what','so','up','out','if',
-    'about','who','get','which','go','me','when','make','can','like','time','no','just','him',
-    'know','take','people','into','year','your','good','some','could','them','see','other',
-    'than','then','now','look','only','come','its','over','think','also','back','after','use',
-    'two','how','our','work','first','well','way','even','new','want','because','any','these',
-    'give','day','most','us','find','here','thing','many','right','often','very','hand','high',
-    'keep','large','last','never','old','same','tell','boy','did','let','too','while','great',
-    'live','where','much','must','still','through','life','before','between','world','being',
-    'under','house','again','place','young','part','head','school','every','left','system',
-    'turn','move','real','might','such','own','off','down','need','both','however','number',
-    'small','always','found','play','read','end','put','home','country','group','begin','seem',
-    'another','follow','came','show','should','provide','problem','point','world','company',
-    'program','question','work','government','number','night','point','home','water','room',
-    'mother','area','money','story','fact','month','lot','study','book','eye','job','word',
-    'business','issue','side','kind','head','house','service','friend','father','power','hour',
-    'game','line','end','member','law','car','city','community','name','president','team',
-    'minute','idea','body','information','back','parent','face','others','level','office',
-    'door','health','person','art','war','history','party','result','change','morning',
-    'reason','research','girl','guy','moment','air','teacher','force','education','dog',
-    'car','student','heart','language','music','example','table','state','family',
-    'market','letter','value','paper','science','space','field','role','market','south',
-    'cost','media','technology','report','plan','view','position','sense','experience',
-    'develop','record','model','class','system','form','knowledge','action','level',
-    'type','process','product','structure','pattern','practice','performance','project',
-    'design','approach','source','control','support','condition','program','policy',
-    'function','context','feature','environment','response','network','material',
-    'require','individual','determine','significant','maintain','establish','similar',
-    'available','additional','particular','fundamental','current','present','earlier',
-    'successful','continue','overall','physical','apparent','occur','consider','member',
-    'period','section','reflect','already','receive','building','natural','remain',
-    'effect','suggest','produce','second','period','region','social','political',
-    'economic','scientific','important','national','cultural','military','general',
-    'personal','certain','entire','private','foreign','original','domestic','certain',
-    'major','modern','traditional','advanced','complex','simple','effective','different',
-    'specific','common','particular','special','standard','general','basic','recent'
+    'about','above','across','action','actually','after','again','against','age','ago','agree',
+    'ahead','almost','already','also','always','among','another','answer','anyone','anything',
+    'around','away','back','basic','because','become','before','begin','behind','being','believe',
+    'below','between','beyond','billion','bring','brother','build','business','call','came',
+    'cannot','carry','cause','certain','chance','change','check','children','choose','claim',
+    'clear','close','color','come','complete','concern','consider','continue','control','could',
+    'country','create','current','daughter','decide','describe','despite','develop','different',
+    'direct','discover','discuss','does','done','down','drive','during','each','early','earth',
+    'economic','education','effect','effort','either','employee','enough','enter','entire','equal',
+    'establish','even','event','every','exactly','example','exist','explain','face','factor',
+    'family','father','field','figure','finally','follow','force','foreign','form','forward',
+    'found','friend','from','front','fund','future','general','give','given','global','going',
+    'good','government','group','growth','guide','happen','hard','have','health','help','here',
+    'herself','himself','history','hold','human','identify','image','important','include',
+    'increase','indicate','industry','instead','interest','into','issue','itself','just','keep',
+    'knowledge','large','later','lead','learn','leave','level','light','likely','listen','little',
+    'local','long','look','lose','loss','major','make','manage','many','market','mean','meet',
+    'member','method','might','mind','model','money','month','more','mother','move','much','must',
+    'national','nature','need','network','never','next','none','note','nothing','number','offer',
+    'often','once','only','open','order','organization','other','over','own','parent','part',
+    'people','perform','person','place','plan','play','point','policy','political','position',
+    'possible','power','practice','present','price','problem','process','produce','program',
+    'provide','public','purpose','question','quickly','quite','raise','rather','reach','reason',
+    'receive','recent','reduce','region','relate','remain','remember','report','require','result',
+    'return','reveal','right','role','rule','same','school','second','section','seek','seem',
+    'series','serious','serve','service','several','show','significant','similar','simple',
+    'since','situation','small','social','society','some','sometimes','south','speak','special',
+    'specific','spend','staff','stand','standard','start','state','stay','still','story','strong',
+    'student','study','subject','success','suggest','support','system','table','team','technology',
+    'than','their','then','theory','there','these','they','thing','third','thought','thousand',
+    'three','through','today','together','total','toward','traditional','training','travel',
+    'treatment','turn','under','understand','unite','until','upon','usually','value','various',
+    'very','view','voice','walk','watch','water','whether','which','while','whole','whose','wide',
+    'within','without','woman','women','world','would','write','year','young','ability','accept',
+    'access','account','achieve','actually','address','affect','afford','allow','already','apply',
+    'approach','argue','assume','attention','attitude','audience','available','average','avoid',
+    'balance','behavior','benefit','body','border','break','budget','capital','career','cause',
+    'citizen','collect','college','common','community','compare','complex','connect','context',
+    'contribute','conversation','cover','culture','customer','data','debate','decision','demand',
+    'demonstrate','depend','design','detail','determine','direct','document','draw','dream',
+    'drive','economy','effective','element','employ','energy','engage','enjoy','ensure','entire',
+    'environment','equal','evaluate','evidence','expect','experience','express','extend','fail',
+    'feature','feel','finance','fine','focus','forget','freedom','function','global','goal',
+    'growth','happen','health','heart','highlight','hold','hope','house','identify','impact',
+    'implement','improve','income','independent','information','initiative','input','inspire',
+    'involve','knowledge','language','launch','leadership','learn','link','manage','matter',
+    'measure','media','mission','moment','movement','operate','opinion','option','outcome',
+    'output','participate','pass','pattern','performance','perspective','physical','positive',
+    'potential','press','prevent','prior','process','professional','project','protect','provide',
+    'quality','reach','reaction','realize','recognize','record','reflect','reform','relate',
+    'release','rely','research','resolve','resource','respond','review','risk','science','security',
+    'select','sense','share','skill','solution','source','specific','status','strategy','structure',
+    'submit','test','transfer','trend','trust','type','understand','unique','update','user',
+    'utilize','vision','volume','welcome','willing','window','write','achieve','agency','alert',
+    'area','assign','base','calculate','capture','center','challenge','character','charge',
+    'choice','circuit','claim','class','clear','code','collect','column','commit','condition',
+    'confirm','conflict','content','core','criteria','cycle','decide','default','define','delete',
+    'deliver','deploy','detect','device','display','distribute','domain','enable','enforce',
+    'error','execute','filter','flag','format','frame','grant','handle','identify','input',
+    'install','integrate','interface','internal','iterate','layer','limit','load','local','lock',
+    'logic','lookup','loop','match','module','monitor','network','object','observe','obtain',
+    'offset','output','override','parse','patch','persist','pipeline','plugin','port','priority',
+    'process','query','queue','range','rebuild','refresh','register','render','replace','request',
+    'require','reset','response','restore','result','return','route','runtime','schema','scope',
+    'search','session','signal','sort','source','stack','state','store','string','switch','sync',
+    'target','template','thread','timeout','token','track','trigger','type','update','validate',
+    'value','variable','version','workflow','wrapper'
   ];
 
-  // Hard: longer, more complex words
+  // Hard: long, complex, academic and technical vocabulary
   const HARD_WORDS = [
     'abandon','ability','abolish','absolute','absorb','abstract','absurd','abundance','academic',
-    'accelerate','acceptance','accessible','accompany','accomplish','account','accumulate','accurate',
-    'achieve','acknowledge','acquire','activate','adaptation','adjustment','administration','admission',
-    'adolescent','adoption','advancement','advantage','adventure','advertise','advocate','affection',
-    'aggregate','aggressive','allocate','alternative','amateur','ambassador','ambiguous','ambition',
-    'amendment','amplify','amusement','analysis','ancestor','ancient','announce','annoyance','anxiety',
-    'apparatus','apparent','appeal','application','appointment','appreciate','approach','appropriate',
-    'approval','arbitrary','architecture','argument','arrangement','articulate','artificial','ascertain',
-    'aspiration','assault','assembly','assessment','assignment','assistance','association','assumption',
-    'atmosphere','attachment','attempt','attendance','attention','attitude','attorney','attraction',
-    'attribute','authority','automate','available','awareness','awkward','background','bankruptcy',
-    'bargain','behavior','benchmark','beneath','beneficial','benevolent','biography','biological',
-    'boundary','brilliant','broadcast','brochure','budget','bulletin','bureaucracy','calculation',
-    'campaign','capability','capacity','capture','catalog','category','caution','celebration','ceremony',
-    'certificate','challenge','champion','character','characteristic','circumstance','citizenship',
-    'civilization','clarify','classic','classification','clientele','coincidence','collaborate',
-    'collection','college','combination','commemorate','commence','commerce','commission','commitment',
-    'commodity','communicate','community','companion','comparable','comparative','compassion',
-    'compensation','competence','competition','complement','complexity','compliance','compliment',
-    'component','comprehend','comprehensive','compromise','compulsory','conceal','conceive','concentrate',
-    'concept','conception','concern','conclusion','concrete','condition','conduct','conference','confess',
-    'confidence','configuration','confirm','conflict','conformity','confront','congress','connection',
-    'consciousness','consequence','conservation','considerable','consistency','consolidate','conspicuous',
-    'constitution','construct','consultation','consume','consumption','contemporary','contempt','contend',
-    'content','contest','context','continent','continual','contract','contradiction','contribute',
-    'controversy','convenience','convention','conversation','conversion','conviction','coordinate',
-    'corporation','correction','correlation','correspondence','council','counsel','counterpart','courage',
-    'creativity','credibility','criminal','criterion','critical','criticism','cultivate','curiosity',
-    'currency','curriculum','custom','database','deadline','debate','debt','decade','deceive','decent',
-    'deception','decision','declaration','decline','decoration','decrease','dedication','defeat','defect',
-    'defense','deficiency','definition','degenerate','delegate','deliberate','delicate','delivery','demand',
-    'democracy','demonstrate','denial','department','departure','dependence','deposit','depression','deputy',
-    'derivative','descend','describe','description','desert','deserve','design','designate','desperate',
-    'destination','destruction','detachment','detection','deteriorate','determination','develop','deviation',
-    'device','diagnosis','dialogue','dietary','differential','difficulty','dimension','diminish','diploma',
-    'direction','disability','disadvantage','disaster','discipline','disclosure','discount','discourse',
-    'discovery','discretion','discrimination','discussion','disease','dismiss','disorder','displacement',
-    'display','disposal','disposition','dispute','disruption','dissolve','distance','distinction',
-    'distortion','distribution','district','diversity','documentation','domestic','dominance','donation',
-    'dramatic','duration','dynamic','earnings','eccentric','ecology','economics','edition','education',
-    'effectiveness','efficiency','elaborate','election','electricity','electronic','element','elevation',
-    'eligibility','eliminate','embrace','emergency','emission','emotion','emphasis','empirical',
-    'employment','enable','encompass','encounter','encouragement','endeavor','endorsement','enforcement',
-    'engagement','engineering','enhancement','enormous','enterprise','enthusiasm','entitlement',
-    'entrepreneur','environment','epidemic','equality','equation','equilibrium','equipment','equivalent',
-    'erosion','essential','establishment','estate','estimate','evaluate','evaporation','eventually',
-    'evidence','evolution','examination','exceed','excellence','exception','excess','exchange','excitement',
-    'exclusion','exclusive','execution','executive','exemplary','exemption','exhaustive','exhibition',
-    'existence','expansion','expectation','expedition','expenditure','experiment','expertise','explanation',
-    'explicit','exploration','explosion','export','exposure','expression','extension','extensive','extent',
-    'external','extinction','extraordinary','extreme','fabrication','facility','factor','faculty','familiar',
-    'fantasy','fascination','fatigue','feasibility','feature','federal','feedback','fertility','fiction',
-    'fierce','financial','flexibility','fluctuation','folklore','forecast','formation','formula','fortune',
-    'fraction','franchise','frequency','friction','fulfillment','function','fundamental','furniture',
-    'furthermore','gallery','gathering','genealogy','generalization','generation','generosity','genetics',
-    'geography','geology','gesture','glacier','globalization','governance','gradual','grammatical','gratitude',
-    'guarantee','guidance','handicap','harassment','harmony','hazard','headquarters','healing','heritage',
-    'hierarchy','highlight','historical','hospitality','humanitarian','hypothesis','identical','identification',
-    'identity','ignorance','illegal','illiteracy','illuminate','illustration','imaginary','imagination',
-    'imitation','immediate','immense','immigration','immune','impact','impartial','implement','implication',
-    'implicit','importance','imposition','impression','imprisonment','improvement','impulse','inability',
-    'inappropriate','inauguration','incentive','incidence','incident','inclination','inclusion','income',
-    'incorporate','incredible','independence','indication','indicator','indigenous','indispensable',
-    'individual','inducement','industrial','inequality','inevitable','infancy','inflation','influence',
-    'informal','information','infrastructure','ingredient','inhabitant','inheritance','initial','initiative',
-    'injection','injury','innovation','input','inquiry','insight','inspection','inspiration','installation',
-    'instance','institution','instruction','instrument','insurance','integrity','intellectual','intelligence',
-    'intense','intention','interaction','interdisciplinary','interface','interference','interim','interior',
-    'intermediate','internal','international','interpretation','interruption','intersection','intervention',
-    'interview','intimate','intricate','introduction','intuition','invasion','invention','inventory',
-    'investigation','investment','invitation','involvement','irrigation','isolation','jeopardy','journalism',
-    'judgment','judicial','junction','jurisdiction','justification','knowledge','laboratory','landscape',
-    'language','launch','lawsuit','legacy','legislation','legitimacy','leisure','liberal','liberty',
-    'likelihood','limitation','linguistic','literacy','literature','litigation','logistics','longitude',
-    'maintenance','management','manipulation','manufacturing','marginal','marriage','masterpiece','material',
-    'mathematics','maturity','maximum','mechanism','mediation','medication','membership','memorial',
-    'mentality','merchandise','metabolism','metaphor','methodology','metropolitan','migration','military',
-    'millennium','mineral','minimal','minimum','ministry','misfortune','mission','mobility','moderate',
-    'modification','molecular','monopoly','morality','mortality','motivation','municipal','mutation',
-    'mutual','mysterious','narrative','navigation','necessity','negotiation','neighborhood','nerve',
-    'neutral','nomination','nonprofit','normative','notable','notebook','notorious','nourishment','nuclear',
-    'numerous','nutrition','obedience','objective','obligation','observation','obstacle','occupation',
-    'offensive','official','offspring','operation','opinion','opponent','opportunity','opposition','optimism',
-    'optional','orbit','orchestra','ordinance','ordinary','organization','orientation','original','orthodox',
-    'outbreak','outcome','outdoor','outlook','output','outrage','outsider','overcome','overlook','overseas',
-    'overwhelm','ownership','oxygen','paradox','paragraph','parallel','parameter','participation','particle',
-    'passion','passive','password','patience','patient','patriotic','patronage','payment','peculiar','pedagogy',
-    'penalty','penetration','pension','perceive','percentage','perception','performance','peripheral',
-    'permanent','permission','persistence','personality','perspective','persuasion','phenomenon','philosophy',
-    'photography','physician','placement','platform','pleasure','plentiful','pluralism','pneumonia','poetry',
-    'polarization','police','policy','politician','pollution','popularity','population','portfolio','portrayal',
-    'position','positive','possession','possibility','posterity','postpone','potential','poverty','practical',
-    'pragmatic','precaution','precedent','precision','prediction','preference','pregnancy','prejudice',
-    'preliminary','premise','premium','preparation','prescription','presentation','preservation','presidency',
-    'prestige','presume','prevention','previous','primary','primitive','principal','prior','priority','privacy',
-    'privilege','probability','procedure','proceeding','process','processor','production','productivity',
-    'profession','proficiency','profit','profound','programming','progression','prohibition','projection',
-    'prominent','promotion','proposal','proposition','prosecution','prospect','prosperity','protection',
-    'protocol','province','provision','psychology','publication','publicity','purchase','pursuit','qualification',
-    'qualitative','quantitative','quarterly','questionnaire','quota','radiation','radical','ratification',
-    'rational','reaction','reality','realization','rebellion','recession','recipe','recognition','recommendation',
-    'reconstruction','recreation','recruitment','reduction','redundancy','reference','reflection','reform',
-    'refugee','refusal','regard','regeneration','regional','registration','regression','regulation',
-    'rehabilitation','rehearsal','reimbursement','reinforcement','rejection','relationship','relativity',
-    'relevance','reliability','religion','reluctance','remainder','remarkable','remedy','reminder','remission',
-    'removal','renaissance','renewal','repetition','replacement','representation','reproduction','republic',
-    'reputation','requirement','rescue','research','reservation','residence','residue','resignation',
-    'resilience','resistance','resolution','resource','respectively','respiration','response','responsibility',
-    'restoration','restraint','restriction','retail','retention','retirement','retrieval','revelation',
-    'revenue','reversal','review','revision','revival','revolution','rhetoric','rigorous','romance','rotation',
-    'sabotage','sacrifice','salvation','sanction','sanctuary','satellite','satisfaction','scarcity','scenario',
-    'scheduling','scholarship','scientific','scrutiny','secondary','secrecy','secretariat','section','security',
-    'segmentation','selection','sensation','sensitivity','sentence','sentiment','separation','sequence',
-    'settlement','severity','sexuality','shelter','shortage','signature','significance','simulation',
-    'skepticism','slavery','sociology','software','sophistication','sovereignty','specialization','specific',
-    'spectacle','spectrum','speculation','spiritual','spokesperson','sponsorship','spontaneous','stability',
-    'stakeholder','standardization','statistics','statute','stereotype','stimulus','stipulation','stochastic',
-    'strategic','strategy','strength','structure','subcommittee','subdivision','subject','submission',
-    'subordinate','subsequent','subsidy','substance','substitute','subtraction','succession','successor',
-    'suffering','sufficiency','suggestion','summit','superintendent','superiority','supervision','supplement',
-    'supplier','suppression','supremacy','surgery','surrender','surrogate','surveillance','survey','survival',
-    'susceptibility','suspension','suspicion','symmetry','sympathy','symphony','symposium','symptom',
-    'syndrome','synthesis','tactical','taxation','technical','technique','technology','telecommunications',
-    'temperature','temporary','tendency','tension','termination','territory','testament','testimony',
-    'threshold','timetable','tolerance','tradition','tragedy','transaction','transcription','transformation',
-    'transgression','transition','translation','transmission','transparency','transportation','trauma',
-    'treasury','treatment','treaty','tremendous','triathlon','tribunal','triumph','trivial','tuition',
-    'turbulence','turnover','tyranny','ultimatum','uncertainty','undergraduate','understanding','unemployment',
-    'unification','universe','university','unprecedented','upbringing','upgrade','usability','utilization',
-    'vacuum','validation','validity','valuation','variation','vegetation','velocity','vendor','venture',
-    'verdict','verification','version','veteran','viability','vicinity','victim','vigilance','violation',
-    'virtue','visibility','visitor','vocabulary','volatile','voltage','volume','voluntary','vulnerability',
-    'warehouse','warfare','warranty','warrior','weaponry','welfare','widespread','wilderness','withdrawal',
-    'witness','workforce','workplace','workshop','xenophobia','yield','youngster','zodiac'
+    'accelerate','acceptance','accessible','accompany','accomplish','accumulate','accurate',
+    'achieve','acknowledge','acquire','activate','adaptation','adjustment','administration',
+    'adolescent','adoption','advancement','adventure','advocate','affection','aggregate',
+    'aggressive','allocate','alternative','ambassador','ambiguous','ambition','amendment',
+    'amplify','amusement','analysis','ancestor','announce','annoyance','anxiety','apparatus',
+    'application','appointment','appreciate','appropriate','approval','arbitrary','architecture',
+    'arrangement','articulate','artificial','aspiration','assault','assembly','assessment',
+    'assignment','assistance','association','assumption','atmosphere','attachment','attendance',
+    'attitude','attorney','attraction','attribute','authority','automate','awareness','awkward',
+    'bankruptcy','bargain','benchmark','beneficial','benevolent','biography','biological',
+    'boundary','broadcast','bureaucracy','calculation','capability','category','celebration',
+    'certificate','challenge','characteristic','circumstance','citizenship','civilization',
+    'clarify','classification','coincidence','collaborate','commemorate','commence','commission',
+    'commitment','communicate','compassion','compensation','competence','competition','complexity',
+    'compliance','component','comprehend','comprehensive','compromise','compulsory','conceive',
+    'concentrate','conception','conclusion','configuration','conformity','consciousness',
+    'consequence','conservation','consistency','consolidate','constitution','construct',
+    'consultation','contemporary','contradiction','controversy','conviction','coordinate',
+    'corporation','correlation','correspondence','counterpart','creativity','credibility',
+    'criterion','cultivation','curiosity','curriculum','database','deception','declaration',
+    'dedication','deficiency','definition','deliberate','delicate','democracy','demonstrate',
+    'dependence','depression','derivative','description','designation','destination','destruction',
+    'deteriorate','determination','diagnosis','differential','disability','disadvantage',
+    'disclosure','discourse','discrimination','displacement','disposition','disruption',
+    'distinction','distribution','diversification','documentation','dominance','ecological',
+    'economics','effectiveness','efficiency','elaborate','electricity','electronic','elevation',
+    'eligibility','eliminate','emergency','emission','emphasis','empirical','employment',
+    'encompass','encouragement','endorsement','enforcement','engineering','enhancement',
+    'enterprise','enthusiasm','entitlement','entrepreneur','environment','epidemic','equality',
+    'equilibrium','equivalent','establishment','evaluation','evaporation','evolution',
+    'examination','excellence','exclusion','execution','exemplary','exemption','exhaustive',
+    'exhibition','expansion','expectation','expedition','expenditure','experiment','expertise',
+    'exploration','extraordinary','fabrication','feasibility','financial','flexibility',
+    'fluctuation','forecast','formation','franchise','frequency','fulfillment','fundamental',
+    'furthermore','genealogy','generalization','generosity','geography','globalization',
+    'governance','grammatical','gratitude','guarantee','harassment','harmony','headquarters',
+    'heritage','hierarchy','historical','humanitarian','hypothesis','identification','ignorance',
+    'illustration','imagination','implication','imprisonment','improvement','inappropriate',
+    'inauguration','incentive','inclination','incorporation','independence','indication',
+    'indigenous','individual','inequality','inevitable','inflation','infrastructure','ingredient',
+    'inheritance','innovation','inspection','inspiration','installation','institution',
+    'instruction','insurance','integrity','intellectual','intelligence','interaction',
+    'interdisciplinary','interference','intermediate','interpretation','intervention','intricate',
+    'intuition','investigation','investment','involvement','irrigation','jeopardy','journalism',
+    'jurisdiction','justification','laboratory','landscape','legislation','legitimacy','leisure',
+    'likelihood','limitation','linguistic','literature','litigation','logistics','maintenance',
+    'manipulation','manufacturing','masterpiece','mathematics','maturity','mechanism','mediation',
+    'medication','membership','mentality','metabolism','metaphor','methodology','metropolitan',
+    'migration','millennium','modification','molecular','monopoly','morality','mortality',
+    'motivation','municipal','mysterious','navigation','necessity','negotiation','neighborhood',
+    'nomination','nonprofit','nourishment','nutrition','obedience','obligation','observation',
+    'occupation','offensive','offspring','operation','opponent','opportunity','opposition',
+    'optimism','orchestra','ordinance','organization','orientation','orthodox','outbreak',
+    'overlook','overwhelm','ownership','paradox','participation','patronage','pedagogy',
+    'penetration','percentage','perception','performance','permanent','persistence','personality',
+    'perspective','persuasion','phenomenon','philosophy','photography','placement','plentiful',
+    'pluralism','polarization','population','portfolio','portrayal','possibility','postpone',
+    'pragmatic','precaution','precedent','prediction','prejudice','preliminary','prescription',
+    'presentation','preservation','presidency','prevention','probability','proceeding',
+    'productivity','profession','proficiency','programming','progression','prohibition',
+    'prominent','proposition','prosecution','prosperity','protocol','psychology','publication',
+    'qualification','quantitative','questionnaire','radiation','ratification','realization',
+    'rebellion','recession','recognition','recommendation','reconstruction','recruitment',
+    'redundancy','reflection','rehabilitation','rehearsal','reimbursement','reinforcement',
+    'relationship','relativity','reliability','reluctance','remarkable','renaissance','repetition',
+    'representation','reproduction','reputation','reservation','resilience','resolution',
+    'respectively','respiration','responsibility','restoration','restriction','retention',
+    'revelation','revolution','rigorous','sabotage','sacrifice','satisfaction','scarcity',
+    'scheduling','scholarship','scrutiny','secretariat','segmentation','sensation','sensitivity',
+    'separation','settlement','significance','simulation','skepticism','sophistication',
+    'sovereignty','specialization','spectacle','speculation','spokesperson','spontaneous',
+    'stability','stakeholder','standardization','statistics','stereotype','stimulus',
+    'stipulation','stochastic','strategy','subdivision','submission','subordinate','subsequent',
+    'subsidy','substitute','succession','suffering','superintendent','supervision','supplement',
+    'suppression','supremacy','susceptibility','suspension','symmetry','sympathy','symposium',
+    'syndrome','synthesis','tactical','taxation','telecommunications','temperature','tendency',
+    'termination','territory','testament','testimony','threshold','tolerance','tragedy',
+    'transcription','transformation','transgression','transmission','transparency','transportation',
+    'treasury','tremendous','tribunal','turbulence','tyranny','ultimatum','uncertainty',
+    'undergraduate','unemployment','unprecedented','utilization','validation','valuation',
+    'vegetation','velocity','verification','viability','vigilance','violation','vocabulary',
+    'vulnerability','warfare','warranty','weaponry','widespread','wilderness','withdrawal',
+    'workforce','workshop','xenophobia','youngster'
   ];
 
-  // Pre-shuffle buffer for each difficulty
+  // ============================================================
+  // Weighted Adaptive Word Pool
+  // ============================================================
+  // Each difficulty has its own weight map: { [word]: weight }
+  // Weight starts at 1.0, increases on miss, decreases on perfect type.
+  const _wordWeights = { easy: {}, normal: {}, hard: {} };
+
+  // Pre-shuffle buffer for initial random ordering
   const _shuffleBuffers = { easy: [], normal: [], hard: [] };
   const _shuffleIndices = { easy: 0, normal: 0, hard: 0 };
 
   /**
-   * Fisher-Yates shuffle for uniform random distribution
+   * Fisher-Yates in-place shuffle for uniform random distribution.
+   * Iterates backward, swapping current element with a randomly chosen
+   * element from the unshuffled portion.
    */
   function _shuffleArray(arr) {
     const a = [...arr];
@@ -317,30 +269,180 @@ const Engine = (() => {
   }
 
   /**
-   * Get next random word using shuffle pool (avoids repeats until pool exhausted)
+   * Weighted random word selection.
+   *
+   * Algorithm: Build a cumulative weight array, pick a random value in
+   * [0, totalWeight), then binary-search for the selected word.
+   * Words with higher weights (more misses) are proportionally more likely
+   * to be selected.
+   *
+   * @param {string} difficulty
+   * @returns {string} A word from the list
+   */
+  function _getWeightedWord(difficulty = 'normal') {
+    const list = _getWordList(difficulty);
+    const weights = _wordWeights[difficulty];
+
+    // Compute total weight and build cumulative array in one pass
+    let totalWeight = 0;
+    const cumulative = new Float32Array(list.length);
+    for (let i = 0; i < list.length; i++) {
+      totalWeight += (weights[list[i]] ?? 1.0);
+      cumulative[i] = totalWeight;
+    }
+
+    // Pick a random point in [0, totalWeight)
+    const r = Math.random() * totalWeight;
+
+    // Binary search for the index
+    let lo = 0, hi = list.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (cumulative[mid] < r) lo = mid + 1;
+      else hi = mid;
+    }
+    return list[lo];
+  }
+
+  /**
+   * Update a word's weight based on whether it was typed perfectly or had errors.
+   *
+   * @param {string} difficulty
+   * @param {string} word
+   * @param {boolean} hadError
+   */
+  function _updateWordWeight(difficulty, word, hadError) {
+    const weights = _wordWeights[difficulty];
+    const current = weights[word] ?? 1.0;
+    if (hadError) {
+      // Increase frequency for missed words (max cap 5.0)
+      weights[word] = Math.min(5.0, current + 0.5);
+    } else {
+      // Slowly reduce frequency for mastered words (min floor 0.5)
+      weights[word] = Math.max(0.5, current - 0.1);
+    }
+  }
+
+  /**
+   * Get next word using shuffle buffer for the first cycle (ensures every word
+   * is seen before repeating), then falls back to weighted selection.
    */
   function _nextWord(difficulty = 'normal') {
     const list = _getWordList(difficulty);
     const buf = _shuffleBuffers[difficulty];
     const idx = _shuffleIndices[difficulty];
 
-    if (idx >= buf.length) {
-      buf.length = 0;
-      buf.push(..._shuffleArray(list));
-      _shuffleIndices[difficulty] = 0;
+    // First pass: use classic shuffle buffer to guarantee full coverage
+    if (idx < list.length) {
+      if (buf.length === 0) {
+        buf.push(..._shuffleArray(list));
+      }
+      return buf[_shuffleIndices[difficulty]++];
     }
 
-    return buf[_shuffleIndices[difficulty]++];
+    // Subsequent passes: use weighted selection so mistyped words reappear more
+    return _getWeightedWord(difficulty);
   }
 
-  // ---- Fast character comparison cache ----
-  const _charCache = new Map();
-
+  // ============================================================
+  // Consistency Score Algorithm
+  // ============================================================
   /**
-   * Generate random words for a test (optimized with shuffle pool)
+   * Calculate typing consistency from WPM timeline samples.
+   *
+   * Method: Compute the coefficient of variation (std-dev / mean) of all
+   * WPM samples in the timeline, then invert it to a 0-100 score.
+   * A perfectly consistent typist scores 100; high variance scores low.
+   *
+   * @param {Array<{wpm: number}>} timeline
+   * @returns {number} Consistency score 0–100
+   */
+  function _calcConsistency(timeline) {
+    const samples = timeline.map(t => t.wpm).filter(w => w > 0);
+    if (samples.length < 2) return 100;
+
+    const mean = samples.reduce((s, v) => s + v, 0) / samples.length;
+    if (mean === 0) return 100;
+
+    const variance = samples.reduce((s, v) => s + (v - mean) ** 2, 0) / samples.length;
+    const stdDev = Math.sqrt(variance);
+    const cv = stdDev / mean; // coefficient of variation
+
+    // cv of 0 → consistency 100; cv of 1 → consistency 0; clamp to [0, 100]
+    return Math.round(Math.max(0, Math.min(100, (1 - cv) * 100)));
+  }
+
+  // ============================================================
+  // Burst WPM Algorithm
+  // ============================================================
+  /**
+   * Calculate peak WPM achieved in any 3-second sliding window.
+   *
+   * For each timeline entry, look back up to 3 seconds in the timeline
+   * and calculate the WPM across that window. Return the maximum.
+   *
+   * @param {Array<{second: number, wpm: number}>} timeline
+   * @returns {number} Burst WPM
+   */
+  function _calcBurstWpm(timeline) {
+    if (timeline.length < 2) {
+      return timeline.length === 1 ? timeline[0].wpm : 0;
+    }
+
+    const WINDOW = 3; // seconds
+    let burstWpm = 0;
+
+    for (let i = timeline.length - 1; i >= 0; i--) {
+      const end = timeline[i];
+      // Find the earliest entry within the 3-second window
+      let j = i;
+      while (j > 0 && (end.second - timeline[j - 1].second) <= WINDOW) j--;
+
+      // Average WPM across this window
+      const windowSamples = timeline.slice(j, i + 1);
+      const avgWpm = windowSamples.reduce((s, t) => s + t.wpm, 0) / windowSamples.length;
+      if (avgWpm > burstWpm) burstWpm = avgWpm;
+    }
+
+    return Math.round(burstWpm);
+  }
+
+  // ============================================================
+  // Average Word Time Algorithm
+  // ============================================================
+  /**
+   * Calculate average milliseconds taken per word completion.
+   * @param {number[]} wordTimes — array of ms per word
+   * @returns {number} average ms
+   */
+  function _calcAvgWordTime(wordTimes) {
+    if (!wordTimes || wordTimes.length === 0) return 0;
+    return Math.round(wordTimes.reduce((s, t) => s + t, 0) / wordTimes.length);
+  }
+
+  // ============================================================
+  // Problem Words Algorithm
+  // ============================================================
+  /**
+   * Derive the top 5 most-missed words from the wordErrors map.
+   * @param {{ [word: string]: number }} wordErrors
+   * @returns {Array<{word: string, errors: number}>}
+   */
+  function _calcProblemWords(wordErrors) {
+    return Object.entries(wordErrors)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([word, errors]) => ({ word, errors }));
+  }
+
+  // ============================================================
+  // Public Word Generation API
+  // ============================================================
+  /**
+   * Generate random words for a test using the weighted adaptive pool.
    * @param {number} count - Number of words to generate
    * @param {string} [difficulty='normal'] - 'easy' | 'normal' | 'hard'
-   * @returns {string[]} Array of random words
+   * @returns {string[]}
    */
   function generateWords(count, difficulty = 'normal') {
     const words = new Array(count);
@@ -351,20 +453,22 @@ const Engine = (() => {
   }
 
   /**
-   * Parse custom text into word array
-   * @param {string} text 
+   * Parse custom text into a word array, sanitizing special characters.
+   * @param {string} text
    * @returns {string[]}
    */
   function parseCustomText(text) {
     if (!text || typeof text !== 'string') return generateWords(25);
-    // Sanitize: remove anything that's not a letter, space, number, or common punctuation
     const sanitized = text.replace(/[<>{}()]/g, '');
     const words = sanitized.split(/\s+/).filter(w => w.length > 0);
     return words.length > 0 ? words : generateWords(25);
   }
 
+  // ============================================================
+  // Test Lifecycle
+  // ============================================================
   /**
-   * Initialize a new test with words
+   * Initialize a new test with a pre-generated word array.
    */
   function initTest(words) {
     AppState.resetTest({
@@ -380,7 +484,7 @@ const Engine = (() => {
   }
 
   /**
-   * Start the test timer
+   * Start the test timer, recording the high-resolution start time.
    */
   function startTest() {
     const state = AppState.getState();
@@ -390,110 +494,119 @@ const Engine = (() => {
     AppState.setState({
       status: 'typing',
       startTime: now,
-      testStartTime: Date.now()
+      testStartTime: Date.now(),
+      wordStartTime: now   // track start of first word
     });
   }
 
+  // ============================================================
+  // Keystroke Processing
+  // ============================================================
   /**
-   * Process a keystroke
+   * Route a KeyboardEvent to the appropriate handler.
    * @param {KeyboardEvent} event
-   * @returns {Object} { type: 'correct' | 'incorrect' | 'backspace' | 'ignore', typed: string }
+   * @returns {{ type: string, typed?: string }}
    */
   function handleKey(event) {
     const state = AppState.getState();
 
-    // Ignore modifier keys, function keys, etc.
+    // Modifier key combos — only allow Ctrl/Alt + Backspace
     if (event.ctrlKey || event.altKey || event.metaKey) {
-      // Allow Ctrl+Backspace / Alt+Backspace to delete whole word
       if ((event.ctrlKey || event.altKey) && event.key === 'Backspace') {
         return handleDeleteWord();
       }
       return { type: 'ignore' };
     }
 
-    // Tab to restart
+    // Tab → restart shortcut
     if (event.key === 'Tab') {
       event.preventDefault();
       return { type: 'restart' };
     }
 
-    // Ignore other non-printable keys
+    // Ignore non-printable keys (except Backspace)
     if (event.key.length > 1 && event.key !== 'Backspace') {
       return { type: 'ignore' };
     }
 
-    // Backspace
-    if (event.key === 'Backspace') {
-      return handleBackspace();
-    }
+    if (event.key === 'Backspace') return handleBackspace();
 
-    // Printable character
     return handleCharacter(event.key);
   }
 
   /**
-   * Handle a printable character input
+   * Handle a printable character keystroke.
+   * Tracks per-character correctness, per-word errors, and word completion timing.
    */
   function handleCharacter(key) {
     const state = AppState.getState();
-    const { words, currentIndex, keystrokes } = state;
+    const { words, currentIndex, keystrokes, wordErrors } = state;
 
-    // Bounds check
-    if (currentIndex.word >= words.length) {
-      return { type: 'ignore' };
-    }
+    if (currentIndex.word >= words.length) return { type: 'ignore' };
 
     const currentWord = words[currentIndex.word];
-    const targetChar = currentWord[currentIndex.char];
 
+    // Space pressed at end of word → advance to next word
     if (currentIndex.char >= currentWord.length) {
-      // Space to move to next word
-      if (key === ' ') {
-        const newWordIndex = currentIndex.word + 1;
-        const newKeystrokes = {
-          total: keystrokes.total + 1,
-          correct: keystrokes.correct + 1,
-          incorrect: keystrokes.incorrect
-        };
+      if (key !== ' ') return { type: 'ignore' };
 
-        // Check if test is complete
-        const isComplete = isTestComplete(newWordIndex);
-        if (isComplete) {
-          completeTest();
-        }
+      const newWordIndex = currentIndex.word + 1;
+      const newKeystrokes = {
+        total: keystrokes.total + 1,
+        correct: keystrokes.correct + 1,
+        incorrect: keystrokes.incorrect
+      };
 
-        AppState.setState({
-          currentIndex: { word: newWordIndex, char: 0 },
-          keystrokes: newKeystrokes
-        });
+      // Record word completion time and update adaptive weight
+      const now = performance.now();
+      const wordTimeMs = state.wordStartTime ? (now - state.wordStartTime) : 0;
+      const newWordTimes = [...(state.wordTimes || []), wordTimeMs];
+      const wordHadError = (wordErrors[currentWord] ?? 0) > 0;
+      const difficulty = state.difficulty || 'normal';
+      _updateWordWeight(difficulty, currentWord, wordHadError);
 
-        return { type: 'space', typed: ' ' };
-      }
-      return { type: 'ignore' };
+      const isComplete = isTestComplete(newWordIndex);
+      if (isComplete) completeTest();
+
+      AppState.setState({
+        currentIndex: { word: newWordIndex, char: 0 },
+        keystrokes: newKeystrokes,
+        wordTimes: newWordTimes,
+        wordStartTime: now
+      });
+
+      return { type: 'space', typed: ' ' };
     }
 
-    // Compare characters
+    // Compare typed char against target char
+    const targetChar = currentWord[currentIndex.char];
     const isCorrect = key === targetChar;
+
     const newKeystrokes = {
       total: keystrokes.total + 1,
       correct: keystrokes.correct + (isCorrect ? 1 : 0),
       incorrect: keystrokes.incorrect + (isCorrect ? 0 : 1)
     };
 
-    let newCharIndex = currentIndex.char + 1;
-    let newWordIndex = currentIndex.word;
+    // Track per-word errors for adaptive weighting and problem words
+    let newWordErrors = wordErrors;
+    if (!isCorrect) {
+      newWordErrors = { ...wordErrors };
+      newWordErrors[currentWord] = (newWordErrors[currentWord] ?? 0) + 1;
+    }
 
-    // Update state with new position and keystrokes
     AppState.setState({
-      currentIndex: { word: newWordIndex, char: newCharIndex },
-      keystrokes: newKeystrokes
+      currentIndex: { word: currentIndex.word, char: currentIndex.char + 1 },
+      keystrokes: newKeystrokes,
+      wordErrors: newWordErrors
     });
 
     return { type: isCorrect ? 'correct' : 'incorrect', typed: key };
   }
 
   /**
-   * Handle backspace
+   * Handle single-character backspace — moves one character backward,
+   * crossing word boundaries if at the beginning of a word.
    */
   function handleBackspace() {
     const state = AppState.getState();
@@ -506,21 +619,18 @@ const Engine = (() => {
     let newWordIndex = currentIndex.word;
     let newCharIndex = currentIndex.char - 1;
 
-    // If at beginning of word (after space), go back to end of previous word
+    // Cross back to previous word if at char 0
     if (newCharIndex < 0 && newWordIndex > 0) {
       newWordIndex--;
       newCharIndex = state.words[newWordIndex].length;
     }
 
-    AppState.setState({
-      currentIndex: { word: newWordIndex, char: newCharIndex }
-    });
-
+    AppState.setState({ currentIndex: { word: newWordIndex, char: newCharIndex } });
     return { type: 'backspace' };
   }
 
   /**
-   * Handle Ctrl/Alt+Backspace - delete whole word
+   * Handle Ctrl/Alt+Backspace — delete entire current word at once.
    */
   function handleDeleteWord() {
     const state = AppState.getState();
@@ -530,46 +640,31 @@ const Engine = (() => {
       return { type: 'ignore' };
     }
 
-    // If in the middle of a word, go to beginning of word
     if (currentIndex.char > 0) {
-      AppState.setState({
-        currentIndex: { word: currentIndex.word, char: 0 }
-      });
+      AppState.setState({ currentIndex: { word: currentIndex.word, char: 0 } });
     } else {
-      // Go to beginning of previous word
       const newWordIndex = Math.max(0, currentIndex.word - 1);
-      AppState.setState({
-        currentIndex: { word: newWordIndex, char: 0 }
-      });
+      AppState.setState({ currentIndex: { word: newWordIndex, char: 0 } });
     }
 
     return { type: 'backspace' };
   }
 
+  // ============================================================
+  // Completion Logic
+  // ============================================================
   /**
-   * Check if the test is complete
+   * Check if the test is complete given the current word index.
    */
   function isTestComplete(wordIndex) {
     const state = AppState.getState();
-
-    if (state.mode === 'words') {
-      // Complete when we've reached or passed the target word count
-      if (wordIndex >= state.selectedWordCount) {
-        return true;
-      }
-    }
-
-    if (state.mode === 'custom') {
-      if (wordIndex >= state.words.length) {
-        return true;
-      }
-    }
-
+    if (state.mode === 'words' && wordIndex >= state.selectedWordCount) return true;
+    if (state.mode === 'custom' && wordIndex >= state.words.length) return true;
     return false;
   }
 
   /**
-   * Complete the test
+   * Finalize the test, computing all stats and persisting them to state.
    */
   function completeTest() {
     const state = AppState.getState();
@@ -583,34 +678,67 @@ const Engine = (() => {
     });
   }
 
+  // ============================================================
+  // Stats Calculation — Enhanced Algorithm
+  // ============================================================
   /**
-   * Calculate WPM, Raw WPM, and Accuracy
-   * @returns {Object} { finalWpm, finalRawWpm, finalAccuracy }
+   * Calculate all typing metrics from final state snapshot.
+   *
+   * Returns:
+   *   finalWpm        — (correct chars / 5) / elapsed minutes
+   *   finalRawWpm     — (total chars / 5) / elapsed minutes
+   *   finalAccuracy   — correct / total * 100
+   *   burstWpm        — peak WPM in any 3-second window
+   *   consistency     — 0–100 stability score (inverse of WPM std-dev CV)
+   *   avgWordTime     — average ms per completed word
+   *   problemWords    — top-5 most missed words [{word, errors}]
+   *
+   * @param {object} state
+   * @param {number} elapsed - seconds
+   * @returns {object}
    */
   function calculateStats(state, elapsed) {
-    const { keystrokes } = state;
+    const { keystrokes, timeline, wordTimes, wordErrors } = state;
     const elapsedMinutes = elapsed / 60;
 
-    // WPM = (correct chars / 5) / time in minutes
+    // Core metrics
     const finalWpm = elapsedMinutes > 0
       ? Math.round((keystrokes.correct / 5) / elapsedMinutes)
       : 0;
 
-    // Raw WPM = (total keystrokes / 5) / time in minutes
     const finalRawWpm = elapsedMinutes > 0
       ? Math.round((keystrokes.total / 5) / elapsedMinutes)
       : 0;
 
-    // Accuracy = (correct / total) * 100
     const finalAccuracy = keystrokes.total > 0
       ? Math.round((keystrokes.correct / keystrokes.total) * 100)
       : 100;
 
-    return { finalWpm, finalRawWpm, finalAccuracy };
+    // Extended metrics
+    const burstWpm = _calcBurstWpm(timeline || []);
+    const consistency = _calcConsistency(timeline || []);
+    const avgWordTime = _calcAvgWordTime(wordTimes || []);
+    const problemWords = _calcProblemWords(wordErrors || {});
+
+    return {
+      finalWpm,
+      finalRawWpm,
+      finalAccuracy,
+      burstWpm,
+      consistency,
+      avgWordTime,
+      problemWords
+    };
   }
 
+  // ============================================================
+  // Timer Tick
+  // ============================================================
   /**
-   * Timer tick - called every second during typing
+   * Called every 250ms during active typing.
+   * Records an extended timeline entry per second:
+   *   { second, wpm, raw, accuracy, errors }
+   * Handles time-mode countdown and auto-completion.
    */
   function tick() {
     const state = AppState.getState();
@@ -618,21 +746,32 @@ const Engine = (() => {
 
     const elapsed = (performance.now() - state.startTime) / 1000;
     const elapsedSec = Math.floor(elapsed);
+    const elapsedMin = elapsed / 60;
 
-    // Record timeline data
-    const currentWpm = elapsed > 0 ? Math.round((state.keystrokes.correct / 5) / (elapsed / 60)) : 0;
+    const currentWpm = elapsed > 0
+      ? Math.round((state.keystrokes.correct / 5) / elapsedMin)
+      : 0;
+    const currentRaw = elapsed > 0
+      ? Math.round((state.keystrokes.total / 5) / elapsedMin)
+      : 0;
+    const currentAccuracy = state.keystrokes.total > 0
+      ? Math.round((state.keystrokes.correct / state.keystrokes.total) * 100)
+      : 100;
 
-    // Only add timeline entry for each new second
-    if (state.timeline.length === 0 || elapsedSec > state.timeline[state.timeline.length - 1].second) {
-      const newTimeline = [...state.timeline, {
+    // Append one entry per elapsed second (de-duped by second)
+    const timeline = state.timeline;
+    if (timeline.length === 0 || elapsedSec > timeline[timeline.length - 1].second) {
+      const newTimeline = [...timeline, {
         second: elapsedSec,
         wpm: currentWpm,
+        raw: currentRaw,
+        accuracy: currentAccuracy,
         errors: state.keystrokes.incorrect
       }];
       AppState.setState({ timeline: newTimeline });
     }
 
-    // Time mode countdown
+    // Countdown timer for time mode
     if (state.mode === 'time') {
       const timeLeft = Math.max(0, state.selectedDuration - elapsedSec);
       if (timeLeft !== state.timeLeft) {
@@ -644,8 +783,11 @@ const Engine = (() => {
     }
   }
 
+  // ============================================================
+  // Real-Time WPM
+  // ============================================================
   /**
-   * Get current WPM in real-time
+   * Return current live WPM (suppressed for the first 0.5 seconds).
    */
   function getCurrentWpm() {
     const state = AppState.getState();
@@ -653,6 +795,22 @@ const Engine = (() => {
     const elapsed = (performance.now() - state.startTime) / 1000;
     if (elapsed < 0.5) return 0;
     return Math.round((state.keystrokes.correct / 5) / (elapsed / 60));
+  }
+
+  // ============================================================
+  // Word Stats Inspector
+  // ============================================================
+  /**
+   * Get current word weight/accuracy stats for diagnostics or UI display.
+   * @param {string} difficulty
+   * @returns {Array<{word: string, weight: number}>} sorted by weight desc
+   */
+  function getWordStats(difficulty = 'normal') {
+    const list = _getWordList(difficulty);
+    const weights = _wordWeights[difficulty];
+    return list
+      .map(word => ({ word, weight: weights[word] ?? 1.0 }))
+      .sort((a, b) => b.weight - a.weight);
   }
 
   return {
@@ -664,7 +822,8 @@ const Engine = (() => {
     tick,
     completeTest,
     calculateStats,
-    getCurrentWpm
+    getCurrentWpm,
+    getWordStats
   };
 })();
 
