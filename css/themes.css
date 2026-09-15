@@ -1,70 +1,272 @@
-/* ============================================
-   Theme System - CSS Custom Properties
-   Cyberpunk theme
-   ============================================ */
+/* ============================================================
+   TypeFlow — Design Tokens & Theme Palettes
+   ------------------------------------------------------------
+   :root            -> non-color tokens + neutral dark fallback
+   [data-theme="…"] -> a COMPLETE colour palette
+
+   Every theme defines the same variable set, so any page renders
+   correctly under any theme. No component should ever hardcode a
+   colour; add a token here instead.
+   ============================================================ */
 
 :root {
-  /* Typography */
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  --font-sans: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  
-  /* Sizing */
+  /* ---- Typography ---- */
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  --font-sans: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --text-typing: 28px;
-  --text-heading: 32px;
+  --text-heading: 28px;
+  --text-stat: 26px;
   --text-subheading: 15px;
-  --text-metrics: 56px;
-  --line-height-typing: 1.6;
-  --letter-spacing-typing: 0.05em;
-  
-  /* Spacing */
+  --text-metrics: 44px;
+  --line-height-typing: 1;
+  --letter-spacing-typing: 0.03em;
+
+  /* ---- Spacing scale ---- */
   --gap-xs: 4px;
   --gap-sm: 8px;
-  --gap-md: 16px;
-  --gap-lg: 24px;
-  --gap-xl: 40px;
-  --gap-xxl: 64px;
-  
-  /* Border Radius */
-  --radius-sm: 6px;
+  --gap-md: 14px;
+  --gap-lg: 20px;
+  --gap-xl: 32px;
+  --gap-xxl: 52px;
+
+  /* ---- Radii ---- */
+  --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 20px;
+  --radius-lg: 16px;
   --radius-full: 9999px;
-  
-  /* Transitions */
-  --transition-fast: 0.15s ease;
-  --transition-medium: 0.3s ease;
-  --transition-slow: 0.5s ease;
-  
-  /* Glassmorphism */
+
+  /* ---- Motion ---- */
+  --transition-fast: 0.14s ease;
+  --transition-medium: 0.28s ease;
+  --transition-slow: 0.45s ease;
+
+  /* ---- Caret ---- */
+  --caret-width: 2px;
+
+  /* ---- Fallback palette (neutral dark) ----
+     Only used if data-theme is missing or unknown. */
+  --background: #0d1117;
+  --background-secondary: #141a22;
+  --background-tertiary: #1a212b;
+  --surface: #1f2731;
+  --header-bg: rgba(13, 17, 23, 0.82);
+  --scrim: rgba(5, 8, 12, 0.66);
+  --text-bright: #e6edf3;
+  --text-medium: #9aa4b2;
+  --text-dim: #6b7484;
+  --primary: #e6edf3;
+  --primary-hover: #ffffff;
+  --primary-dim: rgba(230, 237, 243, 0.12);
+  --accent: #e6edf3;
+  --accent-contrast: #0d1117;
+  --error: #ff4d6d;
+  --error-dim: rgba(255, 77, 109, 0.14);
+  --error-color: rgba(255, 77, 109, 0.4);
+  --correct: #e6edf3;
+  --correct-dim: rgba(230, 237, 243, 0.12);
+  --incorrect: #ff4d6d;
+  --caret-color: #e6edf3;
+  --border: rgba(255, 255, 255, 0.08);
   --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-bg-hover: rgba(255, 255, 255, 0.08);
   --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  
-  /* Caret */
-  --caret-width: 2.5px;
+  --glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.35);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.3);
+  --shadow-2: 0 18px 50px rgba(0, 0, 0, 0.5);
+  --ring: rgba(230, 237, 243, 0.4);
+  --chart-line: #e6edf3;
+  --chart-fill: rgba(230, 237, 243, 0.12);
+  --chart-surface: #10151c;
 }
 
-/* ============================================
-   Theme: Cyberpunk (Neon Tech)
-   ============================================ */
+/* ============================================================
+   Cyberpunk — neon tech (yellow accent / cyan typing)
+   ============================================================ */
 [data-theme="cyberpunk"] {
   --background: #0b0e14;
-  --background-secondary: #111620;
-  --background-tertiary: #161c28;
-  --surface: #1a2030;
-  --text-dim: #4b5263;
-  --text-medium: #7c8298;
-  --text-bright: #00f0ff;
+  --background-secondary: #111621;
+  --background-tertiary: #171d29;
+  --surface: #1c2331;
+  --header-bg: rgba(11, 14, 20, 0.82);
+  --scrim: rgba(4, 6, 10, 0.68);
+  --text-bright: #e6edf6;
+  --text-medium: #8b95a7;
+  --text-dim: #6b7587;
   --primary: #f0e600;
-  --primary-hover: #f5ed33;
-  --primary-dim: rgba(240, 230, 0, 0.15);
-  --error: #ff0055;
-  --error-dim: rgba(255, 0, 85, 0.15);
+  --primary-hover: #f7ef4d;
+  --primary-dim: rgba(240, 230, 0, 0.12);
+  --accent: #00f0ff;
+  --accent-contrast: #0b0e14;
+  --error: #ff2d6f;
+  --error-dim: rgba(255, 45, 111, 0.14);
+  --error-color: rgba(255, 45, 111, 0.4);
   --correct: #00f0ff;
   --correct-dim: rgba(0, 240, 255, 0.12);
-  --incorrect: #ff0055;
+  --incorrect: #ff2d6f;
   --caret-color: #f0e600;
-  --border: rgba(0, 240, 255, 0.12);
+  --border: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-bg-hover: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.35);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.32);
+  --shadow-2: 0 18px 50px rgba(0, 0, 0, 0.55);
+  --ring: rgba(240, 230, 0, 0.45);
   --chart-line: #00f0ff;
-  --chart-fill: rgba(0, 240, 255, 0.1);
+  --chart-fill: rgba(0, 240, 255, 0.12);
+  --chart-surface: #0f1420;
+}
+
+/* ============================================================
+   Nord — Scandinavian frost
+   ============================================================ */
+[data-theme="nord"] {
+  --background: #2e3440;
+  --background-secondary: #353c4a;
+  --background-tertiary: #292e39;
+  --surface: #3b4252;
+  --header-bg: rgba(46, 52, 64, 0.85);
+  --scrim: rgba(20, 24, 31, 0.6);
+  --text-bright: #eceff4;
+  --text-medium: #b6c1d3;
+  --text-dim: #7c8798;
+  --primary: #88c0d0;
+  --primary-hover: #9fd0de;
+  --primary-dim: rgba(136, 192, 208, 0.14);
+  --accent: #88c0d0;
+  --accent-contrast: #2e3440;
+  --error: #bf616a;
+  --error-dim: rgba(191, 97, 106, 0.16);
+  --error-color: rgba(191, 97, 106, 0.45);
+  --correct: #a3be8c;
+  --correct-dim: rgba(163, 190, 140, 0.14);
+  --incorrect: #bf616a;
+  --caret-color: #88c0d0;
+  --border: rgba(236, 239, 244, 0.1);
+  --glass-bg: rgba(236, 239, 244, 0.05);
+  --glass-bg-hover: rgba(236, 239, 244, 0.09);
+  --glass-border: rgba(236, 239, 244, 0.1);
+  --glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 10px 30px rgba(0, 0, 0, 0.22);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.25), 0 10px 30px rgba(0, 0, 0, 0.2);
+  --shadow-2: 0 18px 50px rgba(0, 0, 0, 0.4);
+  --ring: rgba(136, 192, 208, 0.5);
+  --chart-line: #88c0d0;
+  --chart-fill: rgba(136, 192, 208, 0.12);
+  --chart-surface: #262b35;
+}
+
+/* ============================================================
+   OLED Dark — minimalist monochrome
+   ============================================================ */
+[data-theme="oled"] {
+  --background: #000000;
+  --background-secondary: #0a0c10;
+  --background-tertiary: #12151b;
+  --surface: #171b22;
+  --header-bg: rgba(0, 0, 0, 0.82);
+  --scrim: rgba(0, 0, 0, 0.72);
+  --text-bright: #f5f7fa;
+  --text-medium: #9ba3b0;
+  --text-dim: #666e7b;
+  --primary: #e6e8ec;
+  --primary-hover: #ffffff;
+  --primary-dim: rgba(230, 232, 236, 0.12);
+  --accent: #7dd3fc;
+  --accent-contrast: #0a0c10;
+  --error: #ff5c5c;
+  --error-dim: rgba(255, 92, 92, 0.14);
+  --error-color: rgba(255, 92, 92, 0.4);
+  --correct: #e6e8ec;
+  --correct-dim: rgba(230, 232, 236, 0.12);
+  --incorrect: #ff5c5c;
+  --caret-color: #e6e8ec;
+  --border: rgba(255, 255, 255, 0.09);
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-bg-hover: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), 0 10px 30px rgba(0, 0, 0, 0.5);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.6), 0 10px 30px rgba(0, 0, 0, 0.45);
+  --shadow-2: 0 18px 50px rgba(0, 0, 0, 0.7);
+  --ring: rgba(230, 232, 236, 0.4);
+  --chart-line: #e0e0e0;
+  --chart-fill: rgba(224, 224, 224, 0.1);
+  --chart-surface: #0a0c10;
+}
+
+/* ============================================================
+   Forest — nature sage
+   ============================================================ */
+[data-theme="forest"] {
+  --background: #1a2421;
+  --background-secondary: #202c28;
+  --background-tertiary: #18211f;
+  --surface: #26332e;
+  --header-bg: rgba(26, 36, 33, 0.85);
+  --scrim: rgba(9, 14, 12, 0.62);
+  --text-bright: #e8f1ee;
+  --text-medium: #a3b5ad;
+  --text-dim: #748780;
+  --primary: #a3c9a8;
+  --primary-hover: #b7d7bb;
+  --primary-dim: rgba(163, 201, 168, 0.14);
+  --accent: #a3c9a8;
+  --accent-contrast: #14201c;
+  --error: #e27396;
+  --error-dim: rgba(226, 115, 150, 0.16);
+  --error-color: rgba(226, 115, 150, 0.45);
+  --correct: #a3c9a8;
+  --correct-dim: rgba(163, 201, 168, 0.14);
+  --incorrect: #e27396;
+  --caret-color: #a3c9a8;
+  --border: rgba(232, 241, 238, 0.1);
+  --glass-bg: rgba(232, 241, 238, 0.05);
+  --glass-bg-hover: rgba(232, 241, 238, 0.09);
+  --glass-border: rgba(232, 241, 238, 0.1);
+  --glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.25);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.22);
+  --shadow-2: 0 18px 50px rgba(0, 0, 0, 0.45);
+  --ring: rgba(163, 201, 168, 0.5);
+  --chart-line: #a3c9a8;
+  --chart-fill: rgba(163, 201, 168, 0.12);
+  --chart-surface: #16201d;
+}
+
+/* ============================================================
+   Light — clean daylight (indigo accent)
+   ============================================================ */
+[data-theme="light"] {
+  --background: #f5f6f8;
+  --background-secondary: #ffffff;
+  --background-tertiary: #eef0f4;
+  --surface: #eceff4;
+  --header-bg: rgba(255, 255, 255, 0.85);
+  --scrim: rgba(17, 20, 26, 0.32);
+  --text-bright: #12151c;
+  --text-medium: #5a6372;
+  --text-dim: #98a1b0;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-dim: rgba(37, 99, 235, 0.1);
+  --accent: #2563eb;
+  --accent-contrast: #ffffff;
+  --error: #d92d20;
+  --error-dim: rgba(217, 45, 32, 0.1);
+  --error-color: rgba(217, 45, 32, 0.35);
+  --correct: #107a53;
+  --correct-dim: rgba(16, 122, 83, 0.1);
+  --incorrect: #d92d20;
+  --caret-color: #2563eb;
+  --border: rgba(17, 20, 26, 0.09);
+  --glass-bg: rgba(17, 20, 26, 0.03);
+  --glass-bg-hover: rgba(17, 20, 26, 0.06);
+  --glass-border: rgba(17, 20, 26, 0.09);
+  --glass-shadow: 0 1px 2px rgba(17, 20, 26, 0.05), 0 10px 30px rgba(17, 20, 26, 0.07);
+  --shadow-1: 0 1px 2px rgba(17, 20, 26, 0.05), 0 10px 30px rgba(17, 20, 26, 0.07);
+  --shadow-2: 0 18px 50px rgba(17, 20, 26, 0.18);
+  --ring: rgba(37, 99, 235, 0.35);
+  --chart-line: #2563eb;
+  --chart-fill: rgba(37, 99, 235, 0.12);
+  /* The results canvas draws its labels in white, so it always needs a
+     dark panel behind it — even in the light theme. */
+  --chart-surface: #10151c;
 }
